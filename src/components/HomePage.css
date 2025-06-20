@@ -1,0 +1,202 @@
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.game-title {
+  font-size: 72px;
+  font-weight: 900;
+  background: linear-gradient(45deg, var(--primary-blue), var(--sky-blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+  letter-spacing: 3px;
+}
+
+.game-subtitle {
+  font-size: 24px;
+  color: var(--text-light);
+  margin-bottom: 40px;
+}
+
+.hero-buttons {
+  margin-bottom: 40px;
+}
+
+.play-button {
+  font-size: 24px;
+  padding: 20px 60px;
+  border-radius: 50px;
+  background: linear-gradient(45deg, var(--primary-blue), var(--dark-blue));
+  box-shadow: 0 8px 20px rgba(0, 102, 204, 0.3);
+}
+
+.play-button:hover {
+  background: linear-gradient(45deg, var(--dark-blue), var(--primary-blue));
+  box-shadow: 0 12px 30px rgba(0, 102, 204, 0.4);
+}
+
+.quick-stats {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+}
+
+.stat-card h3 {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.stat-card p {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.top-scores-section {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.top-scores-section h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: var(--dark-blue);
+}
+
+.scores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: var(--cloud-white);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.score-item:hover {
+  border-color: var(--primary-blue);
+  transform: translateX(5px);
+}
+
+.rank {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-blue);
+  width: 50px;
+}
+
+.pilot-name {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.score {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dark-blue);
+}
+
+.no-scores {
+  text-align: center;
+  color: var(--text-light);
+  padding: 40px 0;
+  font-style: italic;
+}
+
+.view-all-button {
+  width: 100%;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 150px;
+}
+
+.action-card:hover {
+  border-color: var(--primary-blue);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.action-icon {
+  font-size: 48px;
+}
+
+.action-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 48px;
+  }
+  
+  .game-subtitle {
+    font-size: 18px;
+  }
+  
+  .play-button {
+    font-size: 20px;
+    padding: 15px 40px;
+  }
+  
+  .quick-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .stat-card {
+    width: 100%;
+    max-width: 300px;
+  }
+}

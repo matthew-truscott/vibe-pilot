@@ -1,0 +1,198 @@
+.flight-page {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.no-connection {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.no-connection h2 {
+  color: var(--danger-red);
+  margin-bottom: 20px;
+}
+
+.no-connection p {
+  color: var(--text-light);
+  margin-bottom: 30px;
+  font-size: 18px;
+}
+
+.flight-instruments {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.primary-instruments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.instrument {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.instrument:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.instrument h3 {
+  font-size: 14px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+.instrument-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--dark-blue);
+  font-family: monospace;
+}
+
+.instrument-value.climbing {
+  color: var(--success-green);
+}
+
+.instrument-value.descending {
+  color: var(--danger-red);
+}
+
+.instrument-unit {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-top: 5px;
+}
+
+.secondary-instruments {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: var(--cloud-white);
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.info-row span:first-child {
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.info-row span:last-child {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.info-row .success {
+  color: var(--success-green);
+}
+
+.info-row .warning {
+  color: var(--warning-orange);
+}
+
+.info-row .neutral {
+  color: var(--text-dark);
+}
+
+.flight-stats {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.flight-stats h3 {
+  font-size: 20px;
+  color: var(--dark-blue);
+  margin-bottom: 20px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-row span:first-child {
+  color: var(--text-light);
+}
+
+.stat-row span:last-child {
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.flight-controls {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.start-flight, .end-flight {
+  font-size: 20px;
+  padding: 15px 40px;
+  border-radius: 30px;
+}
+
+.start-flight {
+  background: linear-gradient(45deg, var(--success-green), #45a049);
+}
+
+.start-flight:hover {
+  background: linear-gradient(45deg, #45a049, var(--success-green));
+}
+
+.end-flight {
+  background: white;
+  color: var(--danger-red);
+  border: 2px solid var(--danger-red);
+}
+
+.end-flight:hover {
+  background: var(--danger-red);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .primary-instruments {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .instrument-value {
+    font-size: 36px;
+  }
+  
+  .secondary-instruments {
+    grid-template-columns: 1fr;
+  }
+}

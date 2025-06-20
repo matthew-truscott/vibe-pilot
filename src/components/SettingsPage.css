@@ -1,0 +1,213 @@
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.settings-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.settings-header h1 {
+  font-size: 48px;
+  color: var(--dark-blue);
+  margin-bottom: 10px;
+}
+
+.settings-header p {
+  font-size: 18px;
+  color: var(--text-light);
+}
+
+.save-status {
+  background: var(--success-green);
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.settings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.settings-section {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h2 {
+  font-size: 24px;
+  color: var(--dark-blue);
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.connection-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: var(--cloud-white);
+  border-radius: 10px;
+  margin-bottom: 25px;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.status {
+  font-weight: 600;
+  padding: 5px 15px;
+  border-radius: 20px;
+}
+
+.status.connected {
+  color: var(--success-green);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.status.disconnected {
+  color: var(--danger-red);
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.setting-group {
+  margin-bottom: 20px;
+}
+
+.setting-group label {
+  display: block;
+  font-weight: 500;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.setting-group input[type="text"],
+.setting-group input[type="number"],
+.setting-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.setting-group input:focus,
+.setting-group select:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+}
+
+.setting-group.checkbox label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.setting-group.checkbox input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.volume-control input[type="range"] {
+  flex: 1;
+  cursor: pointer;
+}
+
+.volume-control span {
+  min-width: 50px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.data-actions {
+  text-align: center;
+}
+
+.secondary-button.danger {
+  background: white;
+  color: var(--danger-red);
+  border: 2px solid var(--danger-red);
+}
+
+.secondary-button.danger:hover {
+  background: var(--danger-red);
+  color: white;
+}
+
+.warning-text {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.settings-actions .primary-button {
+  padding: 15px 40px;
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .settings-header h1 {
+    font-size: 36px;
+  }
+  
+  .connection-status {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .controls-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .settings-section {
+    padding: 20px;
+  }
+}
