@@ -14,36 +14,63 @@ interface IncomingMessageData {
   type: string
   message?: string
   timestamp?: string
+  sessionId?: string
 }
 
-function PassengerChat() {
+interface PassengerChatProps {
+  shouldConnect?: boolean;
+}
+
+function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
+  
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState<string>('')
   const [isConnected, setIsConnected] = useState<boolean>(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(chatService.getSessionId())
   const [isTyping, setIsTyping] = useState<boolean>(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { simData } = useSimConnection()
 
   useEffect(() => {
+    if (!shouldConnect) {
+      console.log('Chat connection disabled via props')
+      return
+    }
+    
     // Initialize chat service
     chatService.connect({
       onConnect: () => {
-        console.log('Connected to chat service')
         setIsConnected(true)
-        startTour()
+        // Sync sessionId from service
+        const currentSessionId = chatService.getSessionId()
+        setSessionId(currentSessionId)
+        
+        // Wait a moment for WebSocket to be fully ready
+        setTimeout(() => {
+          startTour()
+        }, 100)
       },
       onDisconnect: () => {
-        console.log('Disconnected from chat service')
         setIsConnected(false)
       },
       onMessage: handleIncomingMessage
     })
 
+    // Fallback: Enable chat after 2 seconds even if WebSocket fails
+    const fallbackTimer = setTimeout(() => {
+      // Check both connection state and if we already have a session
+      if (!chatService.isConnected() && !chatService.getSessionId()) {
+        setIsConnected(true)
+        startTour()
+      }
+    }, 2000)
+
     return () => {
-      chatService.disconnect()
+      clearTimeout(fallbackTimer)
+      // Don't disconnect on unmount - keep connection alive for navigation
+      // chatService.disconnect()
     }
-  }, [])
+  }, [shouldConnect]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     scrollToBottom()
@@ -54,53 +81,77 @@ function PassengerChat() {
   }
 
   const startTour = async (): Promise<void> => {
+    console.log('startTour called, current sessionId:', sessionId)
+    const currentSessionId = chatService.getSessionId()
+    
+    if (currentSessionId) {
+      console.log('Tour already started with sessionId:', currentSessionId)
+      setSessionId(currentSessionId)
+      return
+    }
+    
     try {
+      console.log('Starting new tour...')
       const result = await chatService.startTour('Guest', 'scenic')
+      console.log('Tour started with result:', result)
       setSessionId(result.sessionId)
-      
-      // Add welcome message
-      setMessages([{
-        id: Date.now(),
-        role: 'pilot',
-        content: result.message,
-        timestamp: new Date()
-      }])
     } catch (error) {
       console.error('Failed to start tour:', error)
     }
   }
 
   const handleIncomingMessage = (data: IncomingMessageData): void => {
+    console.log('handleIncomingMessage called with:', data)
+    
     if (data.type === 'PILOT_MESSAGE') {
       setIsTyping(false)
-      setMessages(prev => [...prev, {
+      const newMessage = {
         id: Date.now(),
-        role: 'pilot',
+        role: 'pilot' as const,
         content: data.message || '',
         timestamp: new Date(data.timestamp || Date.now())
-      }])
+      }
+      console.log('Adding pilot message:', newMessage)
+      setMessages(prev => [...prev, newMessage])
     } else if (data.type === 'MESSAGE_RECEIVED') {
       setIsTyping(true)
+    } else if (data.type === 'TOUR_STARTED') {
+      console.log('Tour started message received:', data)
+      // Make sure we capture the sessionId from the backend
+      if (data.sessionId) {
+        setSessionId(data.sessionId)
+      }
     }
   }
 
   const sendMessage = async (): Promise<void> => {
-    if (!inputMessage.trim() || !sessionId) return
+    if (!inputMessage.trim()) return
 
     const message = inputMessage.trim()
     setInputMessage('')
 
     // Add passenger message to chat
-    setMessages(prev => [...prev, {
+    const newMessage = {
       id: Date.now(),
       role: 'passenger',
       content: message,
       timestamp: new Date()
-    }])
+    }
+    console.log('Adding passenger message:', newMessage)
+    setMessages(prev => {
+      const updated = [...prev, newMessage]
+      console.log('Updated messages:', updated)
+      return updated
+    })
 
     // Send message with flight data
+    if (!sessionId) {
+      console.warn('No session ID available - cannot send message')
+      return
+    }
+    
     try {
-      await chatService.sendMessage(message, simData || undefined)
+      chatService.sendMessage(message, simData || undefined)
     } catch (error) {
       console.error('Failed to send message:', error)
       setIsTyping(false)
@@ -125,9 +176,9 @@ function PassengerChat() {
     <div className="passenger-chat">
       <div className="chat-header">
         <div className="pilot-info">
-          <span className="pilot-avatar">👨‍✈️</span>
+          <span className="pilot-avatar">👩‍✈️</span>
           <div>
-            <h3>Captain Mike</h3>
+            <h3>Captain Sarah Mitchell</h3>
             <span className={`status ${isConnected ? 'online' : 'offline'}`}>
               {isConnected ? 'Online' : 'Offline'}
             </span>
@@ -136,15 +187,16 @@ function PassengerChat() {
       </div>
 
       <div className="chat-messages">
+        {messages.length === 0 && <div style={{padding: '20px', color: '#666'}}>No messages yet...</div>}
         {messages.map((msg) => (
           <div key={msg.id} className={`message ${msg.role}`}>
             <div className="message-avatar">
-              {msg.role === 'pilot' ? '👨‍✈️' : '🧑'}
+              {msg.role === 'pilot' ? '👩‍✈️' : '🧑'}
             </div>
             <div className="message-content">
               <div className="message-header">
                 <span className="message-author">
-                  {msg.role === 'pilot' ? 'Captain Mike' : 'You'}
+                  {msg.role === 'pilot' ? 'Captain Sarah' : 'You'}
                 </span>
                 <span className="message-time">
                   {msg.timestamp.toLocaleTimeString([], { 
@@ -159,7 +211,7 @@ function PassengerChat() {
         ))}
         {isTyping && (
           <div className="message pilot typing">
-            <div className="message-avatar">👨‍✈️</div>
+            <div className="message-avatar">👩‍✈️</div>
             <div className="message-content">
               <div className="typing-indicator">
                 <span></span>

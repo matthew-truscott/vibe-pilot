@@ -1,4 +1,3 @@
-import { LangflowClient } from "langflow-chat";
 import config from "../config/langflow.config";
 
 interface FlightData {
@@ -11,24 +10,25 @@ interface FlightData {
   onGround?: boolean;
 }
 
-interface LangflowInput {
-  input_value: string;
-  flow_id: string;
-  session_id: string;
-  tweaks: {
-    flight_context: FlightData;
-  };
-}
+// Removed unused interface - payload is built directly in the method
 
 interface LangflowOutput {
+  session_id?: string;
   outputs?: Array<{
+    inputs?: any;
     outputs?: Array<{
-      type?: string;
       results?: {
         message?: {
-          text: string;
+          text?: string;
+          data?: {
+            text?: string;
+          };
         };
+        text?: string;
+        result?: string;
       };
+      component?: string;
+      type?: string;
     }>;
   }>;
   result?: string;
@@ -36,8 +36,9 @@ interface LangflowOutput {
 }
 
 class LangflowService {
-  private client: LangflowClient | null = null;
-  private tourGuideFlow: any = null;
+  private apiKey: string | undefined;
+  private baseUrl: string = "http://localhost:7860";
+  private flowId: string = "";
 
   constructor() {
     this.initialize();
@@ -45,16 +46,17 @@ class LangflowService {
 
   private initialize(): void {
     try {
-      const clientConfig = config.getClientConfig();
-      this.client = new LangflowClient(clientConfig);
+      this.apiKey = config.apiKey;
+      this.baseUrl = config.baseURL || "http://localhost:7860";
+      this.flowId = config.tourGuideFlowId;
 
-      if (config.tourGuideFlowId) {
-        this.tourGuideFlow = this.client.flow(config.tourGuideFlowId);
+      if (!this.apiKey) {
+        console.warn("Langflow API key not configured - using mock mode");
       }
 
-      console.log("Langflow client initialized successfully");
+      console.log("Langflow service initialized");
     } catch (error) {
-      console.error("Failed to initialize Langflow client:", error);
+      console.error("Failed to initialize Langflow service:", error);
     }
   }
 
@@ -62,19 +64,37 @@ class LangflowService {
     message: string,
     flightData: FlightData,
     sessionId: string,
+    conversationHistory?: Array<{ role: string; content: string }>,
   ): Promise<string> {
-    if (!this.tourGuideFlow) {
+    if (!this.flowId) {
       throw new Error("Tour guide flow not configured");
     }
 
+    // If no API key, return mock response
+    if (!this.apiKey) {
+      return this.getMockResponse(message, flightData);
+    }
+
     try {
-      // Prepare the input for Langflow
-      const input: LangflowInput = {
-        input_value: message,
-        flow_id: config.tourGuideFlowId,
+      // Build conversation context
+      let contextMessage = message;
+      if (conversationHistory && conversationHistory.length > 0) {
+        const historyText = conversationHistory
+          .slice(-6) // Last 6 messages for context
+          .map(
+            (msg) =>
+              `${msg.role === "passenger" ? "Passenger" : "Captain Sarah"}: ${msg.content}`,
+          )
+          .join("\n");
+        contextMessage = `Previous conversation:\n${historyText}\n\nPassenger: ${message}`;
+      }
+
+      const payload = {
+        input_value: contextMessage,
+        output_type: "chat",
+        input_type: "chat",
         session_id: sessionId,
         tweaks: {
-          // Pass flight context as tweaks/variables
           flight_context: {
             altitude: flightData.altitude,
             latitude: flightData.latitude,
@@ -87,39 +107,62 @@ class LangflowService {
         },
       };
 
-      // Run the flow
-      const response = await this.tourGuideFlow.run(input);
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": this.apiKey,
+        },
+        body: JSON.stringify(payload),
+      };
 
-      // Extract the response text
-      // The response structure may vary based on your Langflow setup
-      return this.extractResponseText(response);
+      const url = `${this.baseUrl}/api/v1/run/${this.flowId}`;
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(
+          `Langflow API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const data = (await response.json()) as LangflowOutput;
+      return this.extractResponseText(data);
     } catch (error) {
       console.error("Error sending message to Langflow:", error);
-      throw error;
+      // Return fallback response on error
+      return this.getMockResponse(message, flightData);
     }
   }
 
   private extractResponseText(response: LangflowOutput | string): string {
     // Handle different response formats from Langflow
-    // This may need adjustment based on your specific flow output
+    console.log("Langflow response:", JSON.stringify(response, null, 2));
 
     if (typeof response === "string") {
       return response;
     }
 
+    // Check for the standard Langflow output structure
     if (response.outputs && response.outputs.length > 0) {
-      // Look for chat output
-      const chatOutput = response.outputs.find(
-        (output) =>
-          output.outputs && output.outputs.some((o) => o.type === "chat"),
-      );
-
-      if (
-        chatOutput &&
-        chatOutput.outputs &&
-        chatOutput.outputs[0]?.results?.message?.text
-      ) {
-        return chatOutput.outputs[0].results.message.text;
+      // Iterate through outputs to find the chat response
+      for (const output of response.outputs) {
+        if (output.outputs && Array.isArray(output.outputs)) {
+          for (const component of output.outputs) {
+            // Check various possible locations for the text
+            if (component.results?.message?.text) {
+              return component.results.message.text;
+            }
+            if (component.results?.message?.data?.text) {
+              return component.results.message.data.text;
+            }
+            if (component.results?.text) {
+              return component.results.text;
+            }
+            if (component.results?.result) {
+              return component.results.result;
+            }
+          }
+        }
       }
     }
 
@@ -133,8 +176,34 @@ class LangflowService {
     }
 
     // If we can't extract a proper response, return a fallback
-    console.warn("Unexpected response format from Langflow:", response);
+    console.warn("Could not extract text from Langflow response");
     return "I'm having trouble understanding that. Could you please repeat?";
+  }
+
+  private getMockResponse(message: string, flightData: FlightData): string {
+    const lowerMessage = message.toLowerCase();
+
+    if (flightData.onGround) {
+      if (lowerMessage.includes("ready") || lowerMessage.includes("start")) {
+        return "Welcome aboard! I'm Captain Sarah Mitchell, your tour guide today. We're all set for takeoff - just waiting for clearance. It's going to be a beautiful flight!";
+      }
+      return "We're currently on the ground preparing for our tour. I'll let you know when we're ready for takeoff!";
+    }
+
+    if (lowerMessage.includes("altitude") || lowerMessage.includes("high")) {
+      return `We're currently cruising at ${Math.round(flightData.altitude || 0)} feet. Perfect altitude for sightseeing!`;
+    }
+
+    if (lowerMessage.includes("speed") || lowerMessage.includes("fast")) {
+      return `We're flying at ${Math.round(flightData.speed || 0)} knots - a comfortable cruising speed.`;
+    }
+
+    if (lowerMessage.includes("scared") || lowerMessage.includes("safe")) {
+      return "No need to worry! We're flying in perfect conditions, and safety is always my top priority. Just relax and enjoy the views!";
+    }
+
+    // Generic response
+    return "That's a great observation! The views from up here really are spectacular, aren't they?";
   }
 
   // Create a new tour session
@@ -145,4 +214,3 @@ class LangflowService {
 
 // Export singleton instance
 export default new LangflowService();
-

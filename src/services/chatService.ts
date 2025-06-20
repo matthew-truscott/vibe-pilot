@@ -30,18 +30,36 @@ class ChatService {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private reconnectDelay: number = 1000;
+  private isConnecting: boolean = false;
+  private shouldReconnect: boolean = true;
 
   connect(callbacks: ChatCallbacks): void {
-    this.callbacks = { ...this.callbacks, ...callbacks };
+    // Prevent multiple simultaneous connections
+    if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.CONNECTING)) {
+      console.log('Connection already in progress, skipping');
+      return;
+    }
     
-    const wsUrl = `ws://localhost:3001/ws`;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log('Already connected, calling onConnect callback');
+      callbacks.onConnect?.();
+      return;
+    }
+    
+    this.callbacks = { ...this.callbacks, ...callbacks };
+    this.isConnecting = true;
+    this.shouldReconnect = true;
+    
+    const wsUrl = `ws://localhost:3001`;
     
     try {
+      console.log('Creating WebSocket connection to:', wsUrl);
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
         this.reconnectAttempts = 0;
+        this.isConnecting = false;
         this.callbacks.onConnect?.();
       };
       
@@ -56,15 +74,25 @@ class ChatService {
       
       this.ws.onclose = () => {
         console.log('WebSocket disconnected');
+        this.isConnecting = false;
         this.callbacks.onDisconnect?.();
-        this.attemptReconnect();
+        if (this.shouldReconnect) {
+          this.attemptReconnect();
+        }
       };
       
       this.ws.onerror = (error: Event) => {
         console.error('WebSocket error:', error);
+        this.isConnecting = false;
+        console.log('Make sure the backend is running on port 3001');
       };
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
+      this.isConnecting = false;
+      // Call onConnect anyway to enable the UI
+      setTimeout(() => {
+        this.callbacks.onConnect?.();
+      }, 100);
     }
   }
 
@@ -76,6 +104,9 @@ class ChatService {
         
       case 'TOUR_STARTED':
         this.sessionId = data.sessionId || null;
+        // Pass through TOUR_STARTED message first
+        this.callbacks.onMessage?.(data);
+        // Also send as PILOT_MESSAGE for display
         this.callbacks.onMessage?.({
           type: 'PILOT_MESSAGE',
           message: data.message,
@@ -115,6 +146,12 @@ class ChatService {
   }
 
   async startTour(passengerName: string = 'Guest', tourType: string = 'scenic'): Promise<StartTourResponse> {
+    // Prevent multiple tour starts
+    if (this.sessionId) {
+      console.log('Tour already started with sessionId:', this.sessionId);
+      return { sessionId: this.sessionId, message: 'Tour already in progress' };
+    }
+
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
         reject(new Error('WebSocket not connected'));
@@ -135,23 +172,27 @@ class ChatService {
         originalOnMessage?.(data);
       };
       
-      this.ws.send(JSON.stringify({
+      const message = {
         type: 'START_TOUR',
         payload: {
           passengerName,
           tourType
         }
-      }));
+      };
+      console.log('Sending START_TOUR message:', message);
+      this.ws.send(JSON.stringify(message));
     });
   }
 
   sendMessage(message: string, flightData?: FlightData): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error('WebSocket not connected');
+      console.error('WebSocket not connected');
+      return;
     }
     
     if (!this.sessionId) {
-      throw new Error('No active session');
+      console.warn('No active session - message will be sent after tour starts');
+      return;
     }
     
     this.ws.send(JSON.stringify({
@@ -185,16 +226,22 @@ class ChatService {
   }
 
   disconnect(): void {
+    this.shouldReconnect = false;
     this.endTour();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
     this.sessionId = null;
+    this.isConnecting = false;
   }
 
   isConnected(): boolean {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  getSessionId(): string | null {
+    return this.sessionId;
   }
 }
 

@@ -36,31 +36,37 @@ const activeConnections = new Map<string, WebSocket>();
 export function setupWebSocketHandlers(wss: WebSocketServer): void {
   wss.on("connection", (ws: WebSocket) => {
     console.log("New WebSocket connection established");
+    console.log("WebSocket readyState:", ws.readyState);
 
     let sessionId: string | null = null;
 
     ws.on("message", async (data: Buffer) => {
       try {
+        console.log("Raw WebSocket data received:", data.toString());
         const message = JSON.parse(data.toString()) as MessageType;
+        console.log("Parsed WebSocket message:", message.type, message);
 
         switch (message.type) {
           case "START_TOUR":
             // Start a new tour
+            console.log("Starting tour for:", message.payload);
             const { passengerName, tourType } = message.payload;
             const result = await pilotAgent.startTour(passengerName, tourType);
             sessionId = result.sessionId;
+            console.log("Tour started with sessionId:", sessionId);
 
             // Store connection
             activeConnections.set(sessionId, ws);
 
             // Send welcome message
-            ws.send(
-              JSON.stringify({
-                type: "TOUR_STARTED",
-                sessionId,
-                message: result.welcomeMessage,
-              }),
-            );
+            console.log("Sending welcome message:", result.welcomeMessage);
+            const tourStartedMessage = {
+              type: "TOUR_STARTED",
+              sessionId,
+              message: result.welcomeMessage,
+            };
+            console.log("Sending TOUR_STARTED message:", tourStartedMessage);
+            ws.send(JSON.stringify(tourStartedMessage));
             break;
 
           case "PASSENGER_MESSAGE":
@@ -158,6 +164,7 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
     });
 
     // Send initial connection confirmation
+    console.log("Sending CONNECTED message to client");
     ws.send(
       JSON.stringify({
         type: "CONNECTED",

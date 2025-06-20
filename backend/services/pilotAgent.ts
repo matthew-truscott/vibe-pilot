@@ -56,12 +56,9 @@ class PilotAgentService {
 
     this.sessions.set(sessionId, session);
 
-    // Send initial welcome message
-    const welcomeMessage = await this.sendMessage(
-      sessionId,
-      `New passenger ${passengerName} joining ${tourType} tour`,
-      { altitude: 0, onGround: true },
-    );
+    // Return a simple welcome message without triggering AI
+    const welcomeMessage =
+      "Welcome aboard! I'm Captain Sarah Mitchell, your tour guide today. Feel free to ask me anything about our flight!";
 
     return {
       sessionId,
@@ -92,11 +89,18 @@ class PilotAgentService {
     });
 
     try {
+      // Get conversation history for context
+      const conversationHistory = session.messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
       // Get pilot response from Langflow
       const pilotResponse = await langflowService.sendTourGuideMessage(
         message,
         flightData,
         sessionId,
+        conversationHistory,
       );
 
       // Store pilot response
@@ -181,4 +185,3 @@ class PilotAgentService {
 }
 
 export default new PilotAgentService();
-
