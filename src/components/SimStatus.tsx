@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { useSimConnection } from '../services/simConnection'
 import './SimStatus.css'
 

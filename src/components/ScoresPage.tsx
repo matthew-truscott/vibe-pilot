@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import { getScores, clearScores } from '../utils/storage'
 import { getScoreGrade, getAchievements } from '../services/scoring'
+import { Score } from '../types'
 import './ScoresPage.css'
 
 function ScoresPage() {
-  const [scores, setScores] = useState([])
-  const [sortBy, setSortBy] = useState('score')
-  const [filterAircraft, setFilterAircraft] = useState('all')
+  const [scores, setScores] = useState<Score[]>([])
+  const [sortBy, setSortBy] = useState<string>('score')
+  const [filterAircraft, setFilterAircraft] = useState<string>('all')
 
   useEffect(() => {
     loadScores()
   }, [sortBy, filterAircraft])
 
-  const loadScores = () => {
+  const loadScores = (): void => {
     let allScores = getScores()
     
     if (filterAircraft !== 'all') {
@@ -24,7 +25,7 @@ function ScoresPage() {
         allScores.sort((a, b) => b.score - a.score)
         break
       case 'date':
-        allScores.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        allScores.sort((a, b) => new Date(b.timestamp || '').getTime() - new Date(a.timestamp || '').getTime())
         break
       case 'flightTime':
         allScores.sort((a, b) => b.flightTime - a.flightTime)
@@ -36,14 +37,14 @@ function ScoresPage() {
     setScores(allScores)
   }
 
-  const handleClearScores = () => {
+  const handleClearScores = (): void => {
     if (window.confirm('Are you sure you want to clear all flight records? This cannot be undone.')) {
       clearScores()
       setScores([])
     }
   }
 
-  const getUniqueAircraft = () => {
+  const getUniqueAircraft = (): string[] => {
     const aircraft = new Set(getScores().map(s => s.aircraft))
     return Array.from(aircraft)
   }
@@ -97,8 +98,8 @@ function ScoresPage() {
         <div className="scores-list">
           {scores.map((score, index) => {
             const grade = getScoreGrade(score.score)
-            const achievements = getAchievements(score)
-            const date = new Date(score.timestamp)
+            const achievements = getAchievements(score as any)
+            const date = new Date(score.timestamp || '')
             
             return (
               <div key={score.id} className="score-card">
@@ -167,7 +168,7 @@ function ScoresPage() {
   )
 }
 
-function formatTime(seconds) {
+function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   if (hours > 0) {

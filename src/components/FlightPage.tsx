@@ -4,19 +4,29 @@ import { useSimConnection } from '../services/simConnection'
 import { landAircraft, resetFlightData } from '../services/mockSimData'
 import { calculateFlightScore } from '../services/scoring'
 import { addScore } from '../utils/storage'
+import PassengerChat from './PassengerChat'
 import './FlightPage.css'
+
+interface FlightStats {
+  maxAltitude: number
+  maxSpeed: number
+  smoothnessScore: number
+  landingQuality: string | null
+  totalDistance: number
+}
 
 function FlightPage() {
   const navigate = useNavigate()
   const { connected, simData } = useSimConnection()
-  const [flightStats, setFlightStats] = useState({
+  const [flightStats, setFlightStats] = useState<FlightStats>({
     maxAltitude: 0,
     maxSpeed: 0,
     smoothnessScore: 100,
     landingQuality: null,
     totalDistance: 0
   })
-  const [isFlightActive, setIsFlightActive] = useState(false)
+  const [isFlightActive, setIsFlightActive] = useState<boolean>(false)
+  const [showChat, setShowChat] = useState<boolean>(true)
 
   useEffect(() => {
     if (!connected) {
@@ -35,7 +45,7 @@ function FlightPage() {
     }
   }, [simData, isFlightActive])
 
-  const startFlight = () => {
+  const startFlight = (): void => {
     resetFlightData()
     setIsFlightActive(true)
     setFlightStats({
@@ -47,12 +57,12 @@ function FlightPage() {
     })
   }
 
-  const endFlight = () => {
+  const endFlight = (): void => {
     if (!simData) return
 
     const landingData = landAircraft()
-    const landingQuality = landingData.verticalSpeed > -200 ? 'Perfect' : 
-                          landingData.verticalSpeed > -500 ? 'Good' : 'Hard'
+    const landingQuality = (landingData.verticalSpeed > -200 ? 'Perfect' : 
+                          landingData.verticalSpeed > -500 ? 'Good' : 'Hard') as 'Perfect' | 'Good' | 'Hard'
     
     const score = calculateFlightScore({
       flightTime: simData.flightTime,
@@ -72,7 +82,9 @@ function FlightPage() {
       flightTime: simData.flightTime,
       maxAltitude: flightStats.maxAltitude,
       maxSpeed: flightStats.maxSpeed,
-      landingQuality
+      landingQuality,
+      smoothnessScore: flightStats.smoothnessScore,
+      fuelEfficiency: simData.fuelQuantity
     })
 
     setIsFlightActive(false)
@@ -95,8 +107,9 @@ function FlightPage() {
 
   return (
     <div className="flight-page page-content">
-      <div className="flight-instruments">
-        <div className="primary-instruments">
+      <div className="flight-dashboard">
+        <div className="flight-instruments">
+          <div className="primary-instruments">
           <div className="instrument altitude">
             <h3>Altitude</h3>
             <div className="instrument-value">{Math.round(simData.altitude)}</div>
@@ -168,28 +181,52 @@ function FlightPage() {
         </div>
       </div>
 
-      <div className="flight-controls">
-        {!isFlightActive ? (
-          <button className="primary-button start-flight" onClick={startFlight}>
-            Start New Flight
-          </button>
-        ) : (
-          <button className="secondary-button end-flight" onClick={endFlight}>
-            End Flight & Save
-          </button>
-        )}
+        <div className="flight-controls">
+          {!isFlightActive ? (
+            <button className="primary-button start-flight" onClick={startFlight}>
+              Start New Flight
+            </button>
+          ) : (
+            <button className="secondary-button end-flight" onClick={endFlight}>
+              End Flight & Save
+            </button>
+          )}
+        </div>
       </div>
+
+      {showChat && (
+        <div className="passenger-chat-container">
+          <button 
+            className="chat-toggle"
+            onClick={() => setShowChat(!showChat)}
+            title="Toggle pilot chat"
+          >
+            💬
+          </button>
+          <PassengerChat />
+        </div>
+      )}
+      
+      {!showChat && (
+        <button 
+          className="chat-toggle floating"
+          onClick={() => setShowChat(true)}
+          title="Open pilot chat"
+        >
+          💬
+        </button>
+      )}
     </div>
   )
 }
 
-function getCompassDirection(heading) {
+function getCompassDirection(heading: number): string {
   const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
   const index = Math.round(heading / 45) % 8
   return directions[index]
 }
 
-function formatTime(seconds) {
+function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60

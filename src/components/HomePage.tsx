@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getScores } from '../utils/storage'
+import { Score } from '../types'
 import './HomePage.css'
 
 function HomePage() {
   const navigate = useNavigate()
-  const [topScores, setTopScores] = useState([])
-  const [simConnected, setSimConnected] = useState(false)
+  const [topScores, setTopScores] = useState<Score[]>([])
+  const [simConnected] = useState<boolean>(false)
 
   useEffect(() => {
     const scores = getScores()
     setTopScores(scores.slice(0, 3))
   }, [])
 
-  const handlePlay = () => {
+  const handlePlay = (): void => {
     if (simConnected) {
       navigate('/flight')
     } else {
@@ -27,7 +28,7 @@ function HomePage() {
       <div className="hero-section">
         <h1 className="game-title floating">VIBE PILOT</h1>
         <p className="game-subtitle">Flight Simulator Launcher</p>
-        
+
         <div className="hero-buttons">
           <button 
             className="play-button primary-button"

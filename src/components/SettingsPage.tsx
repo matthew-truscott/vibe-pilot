@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { getSettings, saveSettings, clearScores } from '../utils/storage'
 import { useSimConnection } from '../services/simConnection'
+import { Settings } from '../types'
 import './SettingsPage.css'
 
 function SettingsPage() {
   const { connected, connecting, connect, disconnect } = useSimConnection()
-  const [settings, setSettings] = useState(getSettings())
-  const [saveStatus, setSaveStatus] = useState('')
+  const [settings, setSettings] = useState<Settings>(getSettings())
+  const [saveStatus, setSaveStatus] = useState<string>('')
 
-  const handleSettingChange = (path, value) => {
+  const handleSettingChange = (path: string, value: any): void => {
     const newSettings = { ...settings }
     const keys = path.split('.')
-    let current = newSettings
+    let current: any = newSettings
     
     for (let i = 0; i < keys.length - 1; i++) {
       current = current[keys[i]]
@@ -21,13 +22,13 @@ function SettingsPage() {
     setSettings(newSettings)
   }
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     saveSettings(settings)
     setSaveStatus('Settings saved successfully!')
     setTimeout(() => setSaveStatus(''), 3000)
   }
 
-  const handleConnectionToggle = () => {
+  const handleConnectionToggle = (): void => {
     if (connected) {
       disconnect()
     } else {
@@ -35,7 +36,7 @@ function SettingsPage() {
     }
   }
 
-  const handleClearData = () => {
+  const handleClearData = (): void => {
     if (window.confirm('Are you sure you want to clear all flight data? This cannot be undone.')) {
       clearScores()
       setSaveStatus('All flight data cleared!')
