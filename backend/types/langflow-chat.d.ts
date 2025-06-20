@@ -1,4 +1,4 @@
-declare module 'langflow-chat' {
+declare module "langflow-chat" {
   export interface LangflowClientConfig {
     langflowId?: string;
     apiKey?: string;
@@ -12,3 +12,4 @@ declare module 'langflow-chat' {
     };
   }
 }
+

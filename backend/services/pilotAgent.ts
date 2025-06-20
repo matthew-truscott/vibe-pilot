@@ -1,4 +1,4 @@
-import langflowService from './langflowClient';
+import langflowService from "./langflowClient";
 
 interface FlightData {
   altitude: number;
@@ -11,7 +11,7 @@ interface FlightData {
 }
 
 interface Message {
-  role: 'passenger' | 'pilot';
+  role: "passenger" | "pilot";
   content: string;
   timestamp: Date;
   flightData: FlightData;
@@ -39,38 +39,45 @@ class PilotAgentService {
   }
 
   // Start a new tour session
-  async startTour(passengerName: string = 'Guest', tourType: string = 'scenic'): Promise<StartTourResult> {
+  async startTour(
+    passengerName: string = "Guest",
+    tourType: string = "scenic",
+  ): Promise<StartTourResult> {
     const sessionId = langflowService.createSession();
-    
+
     const session: Session = {
       sessionId,
       passengerName,
       tourType,
       startTime: new Date(),
       messages: [],
-      flightData: null
+      flightData: null,
     };
-    
+
     this.sessions.set(sessionId, session);
-    
+
     // Send initial welcome message
     const welcomeMessage = await this.sendMessage(
       sessionId,
       `New passenger ${passengerName} joining ${tourType} tour`,
-      { altitude: 0, onGround: true }
+      { altitude: 0, onGround: true },
     );
-    
+
     return {
       sessionId,
-      welcomeMessage
+      welcomeMessage,
     };
   }
 
   // Send a message from passenger to pilot
-  async sendMessage(sessionId: string, message: string, flightData: FlightData): Promise<string> {
+  async sendMessage(
+    sessionId: string,
+    message: string,
+    flightData: FlightData,
+  ): Promise<string> {
     const session = this.sessions.get(sessionId);
     if (!session) {
-      throw new Error('Invalid session');
+      throw new Error("Invalid session");
     }
 
     // Update flight data
@@ -78,10 +85,10 @@ class PilotAgentService {
 
     // Store passenger message
     session.messages.push({
-      role: 'passenger',
+      role: "passenger",
       content: message,
       timestamp: new Date(),
-      flightData: { ...flightData }
+      flightData: { ...flightData },
     });
 
     try {
@@ -89,29 +96,29 @@ class PilotAgentService {
       const pilotResponse = await langflowService.sendTourGuideMessage(
         message,
         flightData,
-        sessionId
+        sessionId,
       );
 
       // Store pilot response
       session.messages.push({
-        role: 'pilot',
+        role: "pilot",
         content: pilotResponse,
         timestamp: new Date(),
-        flightData: { ...flightData }
+        flightData: { ...flightData },
       });
 
       return pilotResponse;
     } catch (error) {
-      console.error('Error getting pilot response:', error);
-      
+      console.error("Error getting pilot response:", error);
+
       // Fallback response
       const fallbackResponse = this.getFallbackResponse(message, flightData);
-      
+
       session.messages.push({
-        role: 'pilot',
+        role: "pilot",
         content: fallbackResponse,
         timestamp: new Date(),
-        flightData: { ...flightData }
+        flightData: { ...flightData },
       });
 
       return fallbackResponse;
@@ -124,7 +131,7 @@ class PilotAgentService {
     if (!session) {
       return [];
     }
-    
+
     return session.messages;
   }
 
@@ -144,33 +151,34 @@ class PilotAgentService {
   // Fallback responses when Langflow is unavailable
   private getFallbackResponse(message: string, flightData: FlightData): string {
     const lowerMessage = message.toLowerCase();
-    
+
     if (flightData.onGround) {
-      if (lowerMessage.includes('ready') || lowerMessage.includes('start')) {
+      if (lowerMessage.includes("ready") || lowerMessage.includes("start")) {
         return "We're all set for takeoff! Just waiting for clearance from the tower. It's going to be a beautiful flight today!";
       }
       return "We're currently on the ground preparing for our tour. I'll let you know when we're ready for takeoff!";
     }
-    
-    if (lowerMessage.includes('altitude') || lowerMessage.includes('high')) {
+
+    if (lowerMessage.includes("altitude") || lowerMessage.includes("high")) {
       return `We're currently cruising at ${Math.round(flightData.altitude)} feet. Perfect altitude for sightseeing!`;
     }
-    
-    if (lowerMessage.includes('speed') || lowerMessage.includes('fast')) {
-      return `We're flying at ${Math.round(flightData.speed || 0)} knots - a comfortable cruising speed for our ${flightData.aircraft || 'aircraft'}.`;
+
+    if (lowerMessage.includes("speed") || lowerMessage.includes("fast")) {
+      return `We're flying at ${Math.round(flightData.speed || 0)} knots - a comfortable cruising speed for our ${flightData.aircraft || "aircraft"}.`;
     }
-    
-    if (lowerMessage.includes('scared') || lowerMessage.includes('safe')) {
+
+    if (lowerMessage.includes("scared") || lowerMessage.includes("safe")) {
       return "No need to worry! We're flying in perfect conditions, and safety is always my top priority. Just relax and enjoy the views!";
     }
-    
-    if (lowerMessage.includes('land') || lowerMessage.includes('long')) {
+
+    if (lowerMessage.includes("land") || lowerMessage.includes("long")) {
       return "We've got about 20 more minutes of scenic flying before we head back. Still plenty to see!";
     }
-    
+
     // Generic response
     return "That's a great observation! The views from up here really are spectacular, aren't they?";
   }
 }
 
 export default new PilotAgentService();
+

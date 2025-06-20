@@ -1,5 +1,5 @@
-import { LangflowClient } from 'langflow-chat';
-import config from '../config/langflow.config';
+import { LangflowClient } from "langflow-chat";
+import config from "../config/langflow.config";
 
 interface FlightData {
   altitude?: number;
@@ -47,20 +47,24 @@ class LangflowService {
     try {
       const clientConfig = config.getClientConfig();
       this.client = new LangflowClient(clientConfig);
-      
+
       if (config.tourGuideFlowId) {
         this.tourGuideFlow = this.client.flow(config.tourGuideFlowId);
       }
-      
-      console.log('Langflow client initialized successfully');
+
+      console.log("Langflow client initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize Langflow client:', error);
+      console.error("Failed to initialize Langflow client:", error);
     }
   }
 
-  async sendTourGuideMessage(message: string, flightData: FlightData, sessionId: string): Promise<string> {
+  async sendTourGuideMessage(
+    message: string,
+    flightData: FlightData,
+    sessionId: string,
+  ): Promise<string> {
     if (!this.tourGuideFlow) {
-      throw new Error('Tour guide flow not configured');
+      throw new Error("Tour guide flow not configured");
     }
 
     try {
@@ -78,19 +82,19 @@ class LangflowService {
             heading: flightData.heading,
             speed: flightData.speed,
             aircraft: flightData.aircraft,
-            onGround: flightData.onGround
-          }
-        }
+            onGround: flightData.onGround,
+          },
+        },
       };
 
       // Run the flow
       const response = await this.tourGuideFlow.run(input);
-      
+
       // Extract the response text
       // The response structure may vary based on your Langflow setup
       return this.extractResponseText(response);
     } catch (error) {
-      console.error('Error sending message to Langflow:', error);
+      console.error("Error sending message to Langflow:", error);
       throw error;
     }
   }
@@ -98,33 +102,38 @@ class LangflowService {
   private extractResponseText(response: LangflowOutput | string): string {
     // Handle different response formats from Langflow
     // This may need adjustment based on your specific flow output
-    
-    if (typeof response === 'string') {
+
+    if (typeof response === "string") {
       return response;
     }
-    
+
     if (response.outputs && response.outputs.length > 0) {
       // Look for chat output
-      const chatOutput = response.outputs.find(output => 
-        output.outputs && output.outputs.some(o => o.type === 'chat')
+      const chatOutput = response.outputs.find(
+        (output) =>
+          output.outputs && output.outputs.some((o) => o.type === "chat"),
       );
-      
-      if (chatOutput && chatOutput.outputs && chatOutput.outputs[0]?.results?.message?.text) {
+
+      if (
+        chatOutput &&
+        chatOutput.outputs &&
+        chatOutput.outputs[0]?.results?.message?.text
+      ) {
         return chatOutput.outputs[0].results.message.text;
       }
     }
-    
+
     // Fallback for different response structures
     if (response.result) {
       return response.result;
     }
-    
+
     if (response.message) {
       return response.message;
     }
-    
+
     // If we can't extract a proper response, return a fallback
-    console.warn('Unexpected response format from Langflow:', response);
+    console.warn("Unexpected response format from Langflow:", response);
     return "I'm having trouble understanding that. Could you please repeat?";
   }
 
@@ -136,3 +145,4 @@ class LangflowService {
 
 // Export singleton instance
 export default new LangflowService();
+

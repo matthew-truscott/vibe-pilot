@@ -1,5 +1,5 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import pilotAgent from '../services/pilotAgent';
+import { WebSocketServer, WebSocket } from "ws";
+import pilotAgent from "../services/pilotAgent";
 
 interface FlightData {
   altitude: number;
@@ -25,136 +25,161 @@ interface UpdateFlightDataPayload {
   flightData: FlightData;
 }
 
-type MessageType = 
-  | { type: 'START_TOUR'; payload: StartTourPayload }
-  | { type: 'PASSENGER_MESSAGE'; payload: PassengerMessagePayload }
-  | { type: 'UPDATE_FLIGHT_DATA'; payload: UpdateFlightDataPayload }
-  | { type: 'END_TOUR' };
+type MessageType =
+  | { type: "START_TOUR"; payload: StartTourPayload }
+  | { type: "PASSENGER_MESSAGE"; payload: PassengerMessagePayload }
+  | { type: "UPDATE_FLIGHT_DATA"; payload: UpdateFlightDataPayload }
+  | { type: "END_TOUR" };
 
 const activeConnections = new Map<string, WebSocket>();
 
 export function setupWebSocketHandlers(wss: WebSocketServer): void {
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('New WebSocket connection established');
-    
+  wss.on("connection", (ws: WebSocket) => {
+    console.log("New WebSocket connection established");
+
     let sessionId: string | null = null;
-    
-    ws.on('message', async (data: Buffer) => {
+
+    ws.on("message", async (data: Buffer) => {
       try {
         const message = JSON.parse(data.toString()) as MessageType;
-        
+
         switch (message.type) {
-          case 'START_TOUR':
+          case "START_TOUR":
             // Start a new tour
             const { passengerName, tourType } = message.payload;
             const result = await pilotAgent.startTour(passengerName, tourType);
             sessionId = result.sessionId;
-            
+
             // Store connection
             activeConnections.set(sessionId, ws);
-            
+
             // Send welcome message
-            ws.send(JSON.stringify({
-              type: 'TOUR_STARTED',
-              sessionId,
-              message: result.welcomeMessage
-            }));
+            ws.send(
+              JSON.stringify({
+                type: "TOUR_STARTED",
+                sessionId,
+                message: result.welcomeMessage,
+              }),
+            );
             break;
-            
-          case 'PASSENGER_MESSAGE':
+
+          case "PASSENGER_MESSAGE":
             // Handle passenger message
             if (!sessionId) {
-              ws.send(JSON.stringify({
-                type: 'ERROR',
-                message: 'No active session'
-              }));
+              ws.send(
+                JSON.stringify({
+                  type: "ERROR",
+                  message: "No active session",
+                }),
+              );
               return;
             }
-            
+
             const { message: passengerMessage, flightData } = message.payload;
-            
+
             // Send acknowledgment immediately
-            ws.send(JSON.stringify({
-              type: 'MESSAGE_RECEIVED',
-              timestamp: new Date().toISOString()
-            }));
-            
+            ws.send(
+              JSON.stringify({
+                type: "MESSAGE_RECEIVED",
+                timestamp: new Date().toISOString(),
+              }),
+            );
+
             // Get pilot response
             const pilotResponse = await pilotAgent.sendMessage(
               sessionId,
               passengerMessage,
-              flightData
+              flightData,
             );
-            
+
             // Send pilot response
-            ws.send(JSON.stringify({
-              type: 'PILOT_MESSAGE',
-              message: pilotResponse,
-              timestamp: new Date().toISOString()
-            }));
+            ws.send(
+              JSON.stringify({
+                type: "PILOT_MESSAGE",
+                message: pilotResponse,
+                timestamp: new Date().toISOString(),
+              }),
+            );
             break;
-            
-          case 'UPDATE_FLIGHT_DATA':
+
+          case "UPDATE_FLIGHT_DATA":
             // Update flight data without message
             if (sessionId) {
-              pilotAgent.updateFlightData(sessionId, message.payload.flightData);
+              pilotAgent.updateFlightData(
+                sessionId,
+                message.payload.flightData,
+              );
             }
             break;
-            
-          case 'END_TOUR':
+
+          case "END_TOUR":
             // End the tour
             if (sessionId) {
               pilotAgent.endTour(sessionId);
               activeConnections.delete(sessionId);
-              
-              ws.send(JSON.stringify({
-                type: 'TOUR_ENDED',
-                message: 'Thanks for flying with us today!'
-              }));
+
+              ws.send(
+                JSON.stringify({
+                  type: "TOUR_ENDED",
+                  message: "Thanks for flying with us today!",
+                }),
+              );
             }
             break;
-            
+
           default:
-            ws.send(JSON.stringify({
-              type: 'ERROR',
-              message: 'Unknown message type'
-            }));
+            ws.send(
+              JSON.stringify({
+                type: "ERROR",
+                message: "Unknown message type",
+              }),
+            );
         }
       } catch (error) {
-        console.error('WebSocket message error:', error);
-        ws.send(JSON.stringify({
-          type: 'ERROR',
-          message: 'Failed to process message'
-        }));
+        console.error("WebSocket message error:", error);
+        ws.send(
+          JSON.stringify({
+            type: "ERROR",
+            message: "Failed to process message",
+          }),
+        );
       }
     });
-    
-    ws.on('close', () => {
-      console.log('WebSocket connection closed');
+
+    ws.on("close", () => {
+      console.log("WebSocket connection closed");
       if (sessionId) {
         activeConnections.delete(sessionId);
       }
     });
-    
-    ws.on('error', (error: Error) => {
-      console.error('WebSocket error:', error);
+
+    ws.on("error", (error: Error) => {
+      console.error("WebSocket error:", error);
     });
-    
+
     // Send initial connection confirmation
-    ws.send(JSON.stringify({
-      type: 'CONNECTED',
-      message: 'Connected to tour guide service'
-    }));
+    ws.send(
+      JSON.stringify({
+        type: "CONNECTED",
+        message: "Connected to tour guide service",
+      }),
+    );
   });
 }
 
 // Broadcast flight update to specific session
-export function broadcastFlightUpdate(sessionId: string, flightData: FlightData): void {
+export function broadcastFlightUpdate(
+  sessionId: string,
+  flightData: FlightData,
+): void {
   const ws = activeConnections.get(sessionId);
   if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: 'FLIGHT_UPDATE',
-      flightData
-    }));
+    ws.send(
+      JSON.stringify({
+        type: "FLIGHT_UPDATE",
+        flightData,
+      }),
+    );
   }
 }
+
