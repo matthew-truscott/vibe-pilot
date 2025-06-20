@@ -100,6 +100,7 @@ export interface Settings {
   graphics: string;
   soundVolume: number;
   controls: ControlsSettings;
+  startingLocation?: string;
 }
 
 // Scoring types

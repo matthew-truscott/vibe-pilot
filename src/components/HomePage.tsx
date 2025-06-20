@@ -40,12 +40,12 @@ function HomePage() {
 
         <div className="quick-stats">
           <div className="stat-card">
-            <h3>Total Flights</h3>
+            <h3>Tours Taken</h3>
             <p>{getScores().length}</p>
           </div>
           <div className="stat-card">
-            <h3>Best Score</h3>
-            <p>{topScores[0]?.score || 0}</p>
+            <h3>Hours in Air</h3>
+            <p>{Math.floor(getScores().reduce((acc, s) => acc + (s.flightTime || 0), 0) / 3600)}</p>
           </div>
           <div className="stat-card">
             <h3>Flight Time</h3>
@@ -54,7 +54,7 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="top-scores-section">
+      {/* <div className="top-scores-section">
         <h2>Top Pilots</h2>
         {topScores.length > 0 ? (
           <div className="scores-list">
@@ -75,7 +75,7 @@ function HomePage() {
         >
           View All Scores
         </button>
-      </div>
+      </div> */}
 
       <div className="quick-actions">
         <button 
@@ -83,15 +83,15 @@ function HomePage() {
           onClick={() => navigate('/flight')}
         >
           <span className="action-icon">✈️</span>
-          <span className="action-text">Quick Flight</span>
+          <span className="action-text">Quick Tour</span>
         </button>
-        <button 
+        {/* <button 
           className="action-card"
           onClick={() => navigate('/scores')}
         >
           <span className="action-icon">🏆</span>
           <span className="action-text">Leaderboard</span>
-        </button>
+        </button> */}
         <button 
           className="action-card"
           onClick={() => navigate('/settings')}

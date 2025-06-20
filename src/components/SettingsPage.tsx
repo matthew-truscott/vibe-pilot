@@ -198,6 +198,22 @@ function SettingsPage() {
         </div>
 
         <div className="settings-section">
+          <h2>Tour Settings</h2>
+          
+          <div className="setting-group">
+            <label>Starting Location</label>
+            <select 
+              value={settings.startingLocation || 'san-francisco'}
+              onChange={(e) => handleSettingChange('startingLocation', e.target.value)}
+            >
+              <option value="san-francisco">San Francisco Bay Area</option>
+              <option value="new-york">New York City</option>
+              <option value="grand-canyon">Grand Canyon</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="settings-section">
           <h2>Data Management</h2>
           
           <div className="data-actions">

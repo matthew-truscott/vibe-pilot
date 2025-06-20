@@ -15,7 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/flight" element={<FlightPage />} />
-          <Route path="/scores" element={<ScoresPage />} />
+          {/* <Route path="/scores" element={<ScoresPage />} /> */}
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
         <Navigation />

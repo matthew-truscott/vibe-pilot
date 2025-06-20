@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSimConnection } from '../services/simConnection'
-import { landAircraft, resetFlightData } from '../services/mockSimData'
-import { calculateFlightScore } from '../services/scoring'
-import { addScore } from '../utils/storage'
+import { resetFlightData } from '../services/mockSimData'
 import PassengerChat from './PassengerChat'
 import './FlightPage.css'
 
@@ -17,7 +15,7 @@ interface FlightStats {
 
 function FlightPage() {
   const navigate = useNavigate()
-  const { connected, simData } = useSimConnection()
+  const { connected, connecting, simData, connect } = useSimConnection()
   const [flightStats, setFlightStats] = useState<FlightStats>({
     maxAltitude: 0,
     maxSpeed: 0,
@@ -29,10 +27,11 @@ function FlightPage() {
   const [showChat, setShowChat] = useState<boolean>(true)
 
   useEffect(() => {
-    if (!connected) {
-      navigate('/')
+    // Auto-connect when entering flight page
+    if (!connected && !connecting) {
+      connect()
     }
-  }, [connected, navigate])
+  }, [connected, connecting, connect])
 
   useEffect(() => {
     if (simData && isFlightActive) {
@@ -58,45 +57,41 @@ function FlightPage() {
   }
 
   const endFlight = (): void => {
-    if (!simData) return
-
-    const landingData = landAircraft()
-    const landingQuality = (landingData.verticalSpeed > -200 ? 'Perfect' : 
-                          landingData.verticalSpeed > -500 ? 'Good' : 'Hard') as 'Perfect' | 'Good' | 'Hard'
-    
-    const score = calculateFlightScore({
-      flightTime: simData.flightTime,
-      maxAltitude: flightStats.maxAltitude,
-      maxSpeed: flightStats.maxSpeed,
-      smoothnessScore: flightStats.smoothnessScore,
-      landingQuality,
-      fuelEfficiency: simData.fuelQuantity
-    })
-
-    const pilotName = prompt('Enter pilot name for the logbook:') || 'Anonymous'
-    
-    addScore({
-      pilotName,
-      score,
-      aircraft: simData.aircraft,
-      flightTime: simData.flightTime,
-      maxAltitude: flightStats.maxAltitude,
-      maxSpeed: flightStats.maxSpeed,
-      landingQuality,
-      smoothnessScore: flightStats.smoothnessScore,
-      fuelEfficiency: simData.fuelQuantity
-    })
-
+    // For now, just end the tour and go home
     setIsFlightActive(false)
-    navigate('/scores')
+    navigate('/')
+    
+    // Future: Save tour destination info
+    /* if (!simData) return
+    
+    const tourData = {
+      duration: simData.flightTime,
+      maxAltitude: flightStats.maxAltitude,
+      distance: flightStats.totalDistance,
+      aircraft: simData.aircraft
+    }
+    
+    // Save tour history
+    saveTourDestination(tourData) */
+  }
+
+  if (connecting) {
+    return (
+      <div className="flight-page page-content">
+        <div className="no-connection">
+          <h2>Connecting to Flight Simulator...</h2>
+          <p>Preparing your tour experience</p>
+        </div>
+      </div>
+    )
   }
 
   if (!connected || !simData) {
     return (
       <div className="flight-page page-content">
         <div className="no-connection">
-          <h2>No Flight Simulator Connection</h2>
-          <p>Please connect to your flight simulator to start flying.</p>
+          <h2>Connection Failed</h2>
+          <p>Unable to connect to flight simulator. Please check your settings.</p>
           <button className="primary-button" onClick={() => navigate('/settings')}>
             Go to Settings
           </button>
@@ -184,11 +179,11 @@ function FlightPage() {
         <div className="flight-controls">
           {!isFlightActive ? (
             <button className="primary-button start-flight" onClick={startFlight}>
-              Start New Flight
+              Start Tour
             </button>
           ) : (
             <button className="secondary-button end-flight" onClick={endFlight}>
-              End Flight & Save
+              End Tour
             </button>
           )}
         </div>

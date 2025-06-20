@@ -43,6 +43,7 @@ export const getSettings = (): Settings => {
           elevator: "Up/Down",
           aileron: "Left/Right",
         },
+        startingLocation: "san-francisco",
       };
 };
 

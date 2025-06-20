@@ -29,6 +29,16 @@ interface ExtendedFlightData extends FlightData {
   timestamp: number;
 }
 
+// Starting location coordinates
+const STARTING_LOCATIONS: Record<
+  string,
+  { lat: number; lon: number; name: string }
+> = {
+  "san-francisco": { lat: 37.7749, lon: -122.4194, name: "San Francisco" },
+  "new-york": { lat: 40.7128, lon: -74.006, name: "New York" },
+  "grand-canyon": { lat: 36.1069, lon: -112.1129, name: "Grand Canyon" },
+};
+
 let flightStartTime: number | null = null;
 let lastUpdate: number = Date.now();
 let flightData: FlightData = {
@@ -167,4 +177,3 @@ export const landAircraft = (): FlightData => {
   flightData.gear = true;
   return flightData;
 };
-

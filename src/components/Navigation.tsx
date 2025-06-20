@@ -12,10 +12,10 @@ function Navigation() {
         <span className="nav-icon">✈️</span>
         <span className="nav-text">Flight</span>
       </NavLink>
-      <NavLink to="/scores" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+      {/* <NavLink to="/scores" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <span className="nav-icon">🏆</span>
         <span className="nav-text">Scores</span>
-      </NavLink>
+      </NavLink> */}
       <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <span className="nav-icon">⚙️</span>
         <span className="nav-text">Settings</span>
