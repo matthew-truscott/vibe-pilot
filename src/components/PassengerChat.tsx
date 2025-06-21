@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSimConnection, getSimConnection } from '../services/simConnection'
 import chatService from '../services/chatService'
 import speechService from '../services/speechService'
+import { getSettings } from '../utils/storage'
 import './PassengerChat.css'
 
 interface Message {
@@ -104,7 +105,9 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
     
     try {
       console.log('Starting new tour...')
-      const result = await chatService.startTour('Guest', 'scenic')
+      const settings = getSettings()
+      const destination = settings.startingLocation || 'athens'
+      const result = await chatService.startTour('Guest', destination)
       console.log('Tour started with result:', result)
       setSessionId(result.sessionId)
       

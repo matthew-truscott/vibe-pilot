@@ -86,6 +86,7 @@ class LangflowService {
     flightData: FlightData,
     sessionId: string,
     conversationHistory?: Array<{ role: string; content: string }>,
+    destination?: string
   ): Promise<string> {
     console.log(`\n🌐 [Langflow] sendTourGuideMessage called`);
     console.log(`[Langflow] SessionId: ${sessionId}`);
@@ -101,9 +102,20 @@ class LangflowService {
     console.log(`[Langflow] Attempting to connect to Langflow API...`);
 
     try {
-      // Build conversation context
+      // Build conversation context with destination info
       let contextMessage = message;
-      if (conversationHistory && conversationHistory.length > 0) {
+      
+      // Format destination name properly
+      const destinationName = destination ? 
+        destination.charAt(0).toUpperCase() + destination.slice(1).replace(/-/g, ' ') : 
+        'Athens';
+      
+      console.log(`[Langflow] Destination for tour: ${destinationName}`);
+      
+      // Add destination context for first message
+      if (!conversationHistory || conversationHistory.length === 0) {
+        contextMessage = `[SYSTEM: You are Captain Sarah Mitchell, an experienced tour pilot. Today's scenic tour destination is ${destinationName}. You should be knowledgeable about this location and ready to provide interesting commentary about landmarks, history, and points of interest specific to ${destinationName}. The passenger has just boarded.]\n\nPassenger: ${message}`;
+      } else {
         const historyText = conversationHistory
           .slice(-6) // Last 6 messages for context
           .map(

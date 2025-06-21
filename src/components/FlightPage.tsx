@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSimConnection } from '../services/simConnection'
 import { resetFlightData } from '../services/mockSimData'
-import { getSettings } from '../utils/storage'
-import flightGoalService from '../services/flightGoalService'
 import PassengerChat from './PassengerChat'
 import './FlightPage.css'
 
@@ -34,17 +32,7 @@ function FlightPage() {
     }
   }, [connected, connecting, connect])
 
-  useEffect(() => {
-    // Set flight goal only once when component mounts
-    const settings = getSettings()
-    const destination = settings.startingLocation || 'athens'
-    flightGoalService.setFlightGoal(destination)
-      .then(success => {
-        if (success) {
-          console.log(`Flight goal set to ${destination}`)
-        }
-      })
-  }, []) // Empty dependency array - runs only once on mount
+  // Removed webhook call - now handled after pilot responses
 
   useEffect(() => {
     if (simData && isFlightActive) {

@@ -46,6 +46,53 @@ class FlightGoalService {
     }
   }
 
+  async sendConversationUpdate(
+    destination: string,
+    conversation: Array<{ role: string; content: string; timestamp?: Date }>,
+    latestPilotMessage: string
+  ): Promise<boolean> {
+    const masterContext = `MASTER CONTEXT: Tour destination is ${destination.charAt(0).toUpperCase() + destination.slice(1).replace(/-/g, ' ')}. ` +
+      `Current conversation between passenger and pilot below. ` +
+      `DO NOT take any flight actions unless the pilot explicitly indicates readiness ` +
+      `(e.g., "ready for takeoff", "let's begin our flight", "starting engines", etc.). ` +
+      `Only act on clear pilot decisions about flight operations. ` +
+      `Current status: In conversation phase.`;
+
+    const payload = {
+      masterContext,
+      destination,
+      destinationDescription: this.destinations[destination] || this.destinations['athens'],
+      conversation: conversation.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp?.toISOString() || new Date().toISOString()
+      })),
+      latestPilotMessage,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(this.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send conversation update:', response.status);
+        return false;
+      }
+
+      console.log(`Conversation update sent for ${destination} tour`);
+      return true;
+    } catch (error) {
+      console.error('Error sending conversation update:', error);
+      return false;
+    }
+  }
+
   getDestinations(): Array<{ value: string; label: string }> {
     return Object.keys(this.destinations).map(key => ({
       value: key,

@@ -1,4 +1,5 @@
 import langflowService from "./langflowClient";
+import flightGoalService from "./flightGoalService";
 
 interface FlightData {
   altitude: number;
@@ -24,6 +25,7 @@ interface Session {
   startTime: Date;
   messages: Message[];
   flightData: FlightData | null;
+  lastWebhookInterval?: NodeJS.Timeout;
 }
 
 interface StartTourResult {
@@ -89,6 +91,12 @@ class PilotAgentService {
 
     // Update flight data
     session.flightData = flightData;
+    
+    // Clear any existing webhook resend interval
+    if (session.lastWebhookInterval) {
+      clearInterval(session.lastWebhookInterval);
+      session.lastWebhookInterval = undefined;
+    }
 
     // Store passenger message
     session.messages.push({
@@ -115,6 +123,7 @@ class PilotAgentService {
         flightData,
         sessionId,
         conversationHistory,
+        session.tourType // Pass the destination/tour type
       );
       
       const responseTime = Date.now() - startTime;
@@ -128,6 +137,35 @@ class PilotAgentService {
         timestamp: new Date(),
         flightData: { ...flightData },
       });
+
+      // Send conversation update to webhook
+      console.log(`[PilotAgent] 🎯 Sending conversation to webhook...`);
+      const sendWebhookUpdate = async () => {
+        try {
+          const success = await flightGoalService.sendConversationUpdate(
+            session.messages,
+            pilotResponse,
+            session.tourType
+          );
+          if (success) {
+            console.log(`[PilotAgent] ✅ Webhook updated with conversation`);
+          } else {
+            console.log(`[PilotAgent] ⚠️ Webhook update failed`);
+          }
+        } catch (error) {
+          console.error(`[PilotAgent] ❌ Webhook error:`, error);
+        }
+      };
+      
+      // Send initial webhook update
+      sendWebhookUpdate();
+      
+      // Set up interval to resend every 5 seconds
+      console.log(`[PilotAgent] ⏰ Setting up webhook resend interval (5s)`);
+      session.lastWebhookInterval = setInterval(() => {
+        console.log(`[PilotAgent] 🔄 Resending webhook update...`);
+        sendWebhookUpdate();
+      }, 5000);
 
       return pilotResponse;
     } catch (error) {
@@ -145,6 +183,35 @@ class PilotAgentService {
         timestamp: new Date(),
         flightData: { ...flightData },
       });
+
+      // Send conversation update to webhook even for fallback responses
+      console.log(`[PilotAgent] 🎯 Sending fallback conversation to webhook...`);
+      const sendWebhookUpdate = async () => {
+        try {
+          const success = await flightGoalService.sendConversationUpdate(
+            session.messages,
+            fallbackResponse,
+            session.tourType
+          );
+          if (success) {
+            console.log(`[PilotAgent] ✅ Webhook updated with fallback conversation`);
+          } else {
+            console.log(`[PilotAgent] ⚠️ Webhook update failed for fallback`);
+          }
+        } catch (error) {
+          console.error(`[PilotAgent] ❌ Webhook error for fallback:`, error);
+        }
+      };
+      
+      // Send initial webhook update
+      sendWebhookUpdate();
+      
+      // Set up interval to resend every 5 seconds
+      console.log(`[PilotAgent] ⏰ Setting up webhook resend interval for fallback (5s)`);
+      session.lastWebhookInterval = setInterval(() => {
+        console.log(`[PilotAgent] 🔄 Resending fallback webhook update...`);
+        sendWebhookUpdate();
+      }, 5000);
 
       return fallbackResponse;
     }
@@ -170,6 +237,14 @@ class PilotAgentService {
 
   // End tour session
   endTour(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      // Clear webhook interval if exists
+      if (session.lastWebhookInterval) {
+        console.log(`[PilotAgent] Clearing webhook interval for session: ${sessionId}`);
+        clearInterval(session.lastWebhookInterval);
+      }
+    }
     this.sessions.delete(sessionId);
   }
 
