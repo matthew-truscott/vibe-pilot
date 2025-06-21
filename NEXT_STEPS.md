@@ -3,12 +3,14 @@
 ## Immediate Setup Tasks
 
 - [ ] **Install Dependencies**
+
   ```bash
   npm install
   cd backend && npm install
   ```
 
 - [ ] **Configure Langflow**
+
   - [ ] Copy `backend/.env.example` to `backend/.env`
   - [ ] Get Langflow API key
   - [ ] Create tour guide flow in Langflow
@@ -23,12 +25,14 @@
 ## Langflow Agent Development
 
 - [ ] **Create Basic Tour Guide Flow**
+
   - [ ] Set up Chat Input/Output components
   - [ ] Create prompt template (see `backend/LANGFLOW_SETUP.md`)
   - [ ] Configure LLM settings
   - [ ] Test with sample flight data
 
 - [ ] **Enhance Agent Intelligence**
+
   - [ ] Add location database for landmarks
   - [ ] Implement weather awareness
   - [ ] Create emergency response handling
@@ -44,6 +48,7 @@
 ## Integration Tasks
 
 - [ ] **Real Flight Sim Connection**
+
   - [ ] Replace mock data with SimConnect/FSUIPC
   - [ ] Map real telemetry to data structure
   - [ ] Handle connection failures gracefully
@@ -58,12 +63,14 @@
 ## Feature Development
 
 - [ ] **Voice Integration**
+
   - [ ] Add text-to-speech for pilot
   - [ ] Implement speech-to-text for passenger
   - [ ] Create radio effect audio filter
   - [ ] Add ambient cockpit sounds
 
 - [ ] **Tour Modes**
+
   - [ ] City skyline tours
   - [ ] Coastal scenic routes
   - [ ] Mountain adventures
@@ -79,6 +86,7 @@
 ## UI/UX Improvements
 
 - [ ] **Chat Enhancements**
+
   - [ ] Message reactions/emojis
   - [ ] Photo capture moments
   - [ ] Flight path visualization
@@ -93,18 +101,21 @@
 ## Production Readiness
 
 - [ ] **Security**
+
   - [ ] Add rate limiting
   - [ ] Implement user authentication
   - [ ] Secure WebSocket connections (WSS)
   - [ ] Input validation and sanitization
 
 - [ ] **Performance**
+
   - [ ] Add Redis for session storage
   - [ ] Implement message queuing
   - [ ] Optimize Langflow calls
   - [ ] Add caching layer
 
 - [ ] **Monitoring**
+
   - [ ] Add error tracking (Sentry)
   - [ ] Implement analytics
   - [ ] Create admin dashboard
@@ -119,12 +130,14 @@
 ## Testing
 
 - [ ] **Unit Tests**
+
   - [ ] Test scoring algorithms
   - [ ] Test flight data processing
   - [ ] Test WebSocket handlers
   - [ ] Test Langflow integration
 
 - [ ] **Integration Tests**
+
   - [ ] End-to-end chat flow
   - [ ] Flight sim data pipeline
   - [ ] Session management
@@ -139,6 +152,7 @@
 ## Documentation
 
 - [ ] **User Guide**
+
   - [ ] How to connect flight sim
   - [ ] Chat commands/features
   - [ ] Troubleshooting guide
@@ -166,7 +180,7 @@
 ## Quick Win Improvements
 
 1. **Add Loading States** - Show skeleton screens while data loads
-2. **Improve Error Messages** - User-friendly error explanations  
+2. **Improve Error Messages** - User-friendly error explanations
 3. **Add Sound Effects** - Button clicks, notifications
 4. **Save Chat History** - Persist conversations locally
 5. **Keyboard Shortcuts** - Quick actions for power users
@@ -175,3 +189,4 @@
 8. **Favorite Responses** - Save memorable pilot quotes
 
 Remember: Start with the basics (Langflow integration) and iterate!
+

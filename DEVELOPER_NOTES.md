@@ -1,7 +1,9 @@
 # Vibe Pilot Developer Notes
 
 ## Project Overview
+
 This is a flight simulator launcher with an integrated AI tour guide system. The project consists of:
+
 1. **React Frontend** - Flight sim launcher with game-like UI
 2. **Node.js Backend** - Handles Langflow AI integration for tour guide functionality
 3. **Langflow Integration** - Connects to external Langflow instance for AI agent responses
@@ -9,6 +11,7 @@ This is a flight simulator launcher with an integrated AI tour guide system. The
 ## Architecture
 
 ### Frontend (React + Vite)
+
 ```
 src/
 ├── components/
@@ -29,6 +32,7 @@ src/
 ```
 
 ### Backend (Node.js + Express)
+
 ```
 backend/
 ├── server.js                 # Express + WebSocket server
@@ -46,19 +50,23 @@ backend/
 ## Key Concepts
 
 ### 1. Tour Guide Experience
+
 The user is a passenger in a 2-seater aircraft with an AI pilot/tour guide. The pilot:
+
 - Provides commentary based on location, altitude, and flight phase
 - Responds to passenger questions
 - Has personality and aviation knowledge
 - Receives real-time flight data with each message
 
 ### 2. Flight Sim Integration
+
 - The flight sim runs separately (FSUIPC/SimConnect)
 - Flight data is already being fed to the React app via `simConnection.js`
 - Currently using **mock data** for development
 - Real sim data will include: altitude, speed, position, heading, aircraft type
 
 ### 3. Langflow Integration
+
 The backend connects to Langflow to power the AI tour guide:
 
 ```javascript
@@ -74,6 +82,7 @@ The backend connects to Langflow to power the AI tour guide:
 ## Setup Instructions
 
 ### 1. Backend Setup
+
 ```bash
 cd backend
 npm install
@@ -89,21 +98,25 @@ npm start  # Runs on port 3001
 ```
 
 ### 2. Frontend Setup
+
 ```bash
 npm install
 npm run dev  # Runs on port 5173
 ```
 
 ### 3. Langflow Configuration
+
 Your Langflow flow needs:
+
 - **Chat Input** component (receives passenger messages)
 - **Chat Output** component (sends pilot responses)
 - Access to flight context via tweaks/variables
 - Prompt engineering for tour guide personality
 
 Example prompt structure:
+
 ```
-You are Captain Mike, a friendly tour guide pilot. 
+You are Captain Mike, a friendly tour guide pilot.
 Current flight data: {flight_context}
 Passenger message: {input_value}
 Provide engaging, location-aware commentary...
@@ -112,6 +125,7 @@ Provide engaging, location-aware commentary...
 ## Current State & What's Working
 
 ### ✅ Completed
+
 1. **Full backend infrastructure** for Langflow integration
 2. **WebSocket real-time chat** with reconnection logic
 3. **PassengerChat UI** with typing indicators, quick questions
@@ -121,6 +135,7 @@ Provide engaging, location-aware commentary...
 7. **Mobile responsive** chat interface
 
 ### 🚧 Needs Implementation
+
 1. **Langflow Flow Creation** - The actual tour guide agent in Langflow
 2. **Real SimConnect/FSUIPC data** - Currently using mock data
 3. **Location-based POI system** - Landmark database for commentary
@@ -130,7 +145,9 @@ Provide engaging, location-aware commentary...
 ## Code Patterns & Conventions
 
 ### WebSocket Communication
+
 Messages follow this structure:
+
 ```javascript
 // From Frontend to Backend
 {
@@ -150,6 +167,7 @@ Messages follow this structure:
 ```
 
 ### Flight Data Structure
+
 ```javascript
 {
   altitude: 2500,        // feet
@@ -164,6 +182,7 @@ Messages follow this structure:
 ```
 
 ### Error Handling
+
 - WebSocket auto-reconnects up to 5 times
 - Fallback responses for common questions
 - Graceful degradation if backend unavailable
@@ -171,33 +190,40 @@ Messages follow this structure:
 ## Testing & Development
 
 ### Mock Mode
+
 The app works without real flight sim connection:
+
 1. `mockSimData.js` generates realistic flight data
 2. Test the chat without Langflow using fallback responses
 3. Sim connection status shown in top-right
 
 ### Debug WebSocket
+
 Open browser console:
+
 ```javascript
 // Check connection status
-chatService.isConnected()
+chatService.isConnected();
 
 // Manual message send
-chatService.sendMessage("Test message", { altitude: 1000 })
+chatService.sendMessage("Test message", { altitude: 1000 });
 ```
 
 ## Deployment Considerations
 
 1. **Environment Variables**
+
    - Never commit `.env` files
    - Use proper secrets management in production
    - Different Langflow endpoints for dev/prod
 
 2. **CORS Configuration**
+
    - Currently allows all origins in development
    - Restrict to specific domains in production
 
 3. **WebSocket Scaling**
+
    - Current implementation is single-server
    - Consider Redis for multi-server deployment
 
@@ -209,18 +235,21 @@ chatService.sendMessage("Test message", { altitude: 1000 })
 ## Next Developer Tasks
 
 ### High Priority
+
 1. Create the Langflow tour guide flow with proper prompts
 2. Test with real FSUIPC/SimConnect data
 3. Build POI database for major landmarks
 4. Add more pilot personality options
 
 ### Medium Priority
+
 1. Implement voice synthesis for pilot responses
 2. Add flight recording/playback with commentary
 3. Create tutorial mode for new passengers
 4. Build admin panel for managing tours
 
 ### Nice to Have
+
 1. Multiple language support
 2. Weather-aware commentary
 3. Emergency scenario handling
@@ -229,16 +258,19 @@ chatService.sendMessage("Test message", { altitude: 1000 })
 ## Common Issues & Solutions
 
 ### "WebSocket won't connect"
+
 - Check backend is running on port 3001
 - Verify no CORS issues in browser console
 - Ensure `.env` file exists with valid config
 
 ### "Langflow responses are generic"
+
 - Pass more flight context in tweaks
 - Improve prompt engineering in flow
 - Check flight data is being sent correctly
 
 ### "Chat messages delayed"
+
 - Check Langflow API response times
 - Consider caching common responses
 - Implement streaming responses
@@ -250,3 +282,4 @@ chatService.sendMessage("Test message", { altitude: 1000 })
 - WebSocket docs: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
 
 Remember: The goal is to create an immersive passenger experience where the AI pilot provides contextual, engaging commentary throughout the scenic flight!
+

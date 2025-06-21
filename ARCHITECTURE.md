@@ -1,6 +1,7 @@
 # System Architecture
 
 ## Overview
+
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
@@ -8,21 +9,22 @@
 │ (FSUIPC/Mock)   │     │   (Port 5173)   │ WS  │   (Port 3001)   │
 │                 │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └────────┬────────┘
-                                                          │
-                                                          │ HTTPS
-                                                          │
-                                                          ▼
-                                                 ┌─────────────────┐
-                                                 │                 │
-                                                 │    Langflow     │
-                                                 │   (AI Agent)    │
-                                                 │                 │
-                                                 └─────────────────┘
+                                                         │
+                                                         │ HTTPS
+                                                         │
+                                                         ▼
+                                                ┌─────────────────┐
+                                                │                 │
+                                                │    Langflow     │
+                                                │   (AI Agent)    │
+                                                │                 │
+                                                └─────────────────┘
 ```
 
 ## Data Flow
 
 ### 1. Flight Data Flow
+
 ```
 Flight Sim ──(telemetry)──▶ simConnection.js ──(state)──▶ React Components
                                     │
@@ -30,6 +32,7 @@ Flight Sim ──(telemetry)──▶ simConnection.js ──(state)──▶ Re
 ```
 
 ### 2. Chat Message Flow
+
 ```
 User Input ──▶ PassengerChat ──▶ WebSocket ──▶ Backend
                                                   │
@@ -47,6 +50,7 @@ WebSocket ◀── PassengerChat ◀── WebSocket ◀── Pilot Response
 ## Component Relationships
 
 ### Frontend Components
+
 ```
 App.jsx
 ├── SimStatus (global connection indicator)
@@ -73,6 +77,7 @@ App.jsx
 ```
 
 ### Backend Services
+
 ```
 server.js
 ├── Express Middleware
@@ -104,6 +109,7 @@ Services:
 ## State Management
 
 ### Frontend State
+
 ```javascript
 // Global State (via Context/Service)
 - simConnection: { connected, simData }
@@ -118,6 +124,7 @@ Services:
 ```
 
 ### Backend State
+
 ```javascript
 // In-Memory Stores
 - Active Sessions: Map<sessionId, sessionData>
@@ -139,6 +146,7 @@ Services:
 ### WebSocket Message Types
 
 #### Client → Server
+
 ```javascript
 // Start Tour
 { type: 'START_TOUR', payload: { passengerName, tourType } }
@@ -154,6 +162,7 @@ Services:
 ```
 
 #### Server → Client
+
 ```javascript
 // Connection Established
 { type: 'CONNECTED', message: string }
@@ -177,6 +186,7 @@ Services:
 ## Security Considerations
 
 ### API Key Protection
+
 ```
 ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
 │   Browser    │   ❌  │  Langflow    │   ✅  │   Backend    │
@@ -188,6 +198,7 @@ Services:
 ```
 
 ### Data Validation
+
 - Flight data sanitization
 - Message length limits
 - Session timeout handling
@@ -196,6 +207,7 @@ Services:
 ## Deployment Architecture
 
 ### Development
+
 ```
 - Frontend: Vite Dev Server (HMR enabled)
 - Backend: Node.js with nodemon (auto-restart)
@@ -203,6 +215,7 @@ Services:
 ```
 
 ### Production (Recommended)
+
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Vercel/   │     │   Heroku/   │     │  Langflow   │
@@ -216,12 +229,14 @@ Services:
 ## Performance Optimizations
 
 ### Frontend
+
 - Lazy load chat component
 - Throttle flight data updates
 - Message virtualization for long chats
 - WebSocket reconnection backoff
 
 ### Backend
+
 - Connection pooling for Langflow
 - Message queuing for high load
 - Session cleanup after inactivity
@@ -230,6 +245,7 @@ Services:
 ## Future Scalability
 
 ### Horizontal Scaling
+
 ```
                     Load Balancer
                          │
@@ -243,7 +259,9 @@ Services:
 ```
 
 ### Multi-Region
+
 - CDN for static assets
 - Regional Langflow deployments
 - GeoDNS for API routing
 - Cross-region session sync
+
