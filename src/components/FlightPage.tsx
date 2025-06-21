@@ -24,7 +24,6 @@ function FlightPage() {
     totalDistance: 0
   })
   const [isFlightActive, setIsFlightActive] = useState<boolean>(false)
-  const [showChat, setShowChat] = useState<boolean>(true)
 
   useEffect(() => {
     // Auto-connect when entering flight page
@@ -189,28 +188,9 @@ function FlightPage() {
         </div>
       </div>
 
-      {showChat && (
-        <div className="passenger-chat-container">
-          <button 
-            className="chat-toggle"
-            onClick={() => setShowChat(!showChat)}
-            title="Toggle pilot chat"
-          >
-            💬
-          </button>
-          <PassengerChat />
-        </div>
-      )}
-      
-      {!showChat && (
-        <button 
-          className="chat-toggle floating"
-          onClick={() => setShowChat(true)}
-          title="Open pilot chat"
-        >
-          💬
-        </button>
-      )}
+      <div className="passenger-chat-container">
+        <PassengerChat />
+      </div>
     </div>
   )
 }

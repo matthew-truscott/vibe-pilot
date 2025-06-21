@@ -351,49 +351,6 @@ component_display_name
   }
 }
 
-.chat-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: var(--primary-blue);
-  color: white;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.chat-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
-.chat-toggle.floating {
-  position: fixed;
-  bottom: 100px;
-  right: 30px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 20px rgba(0, 102, 204, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 102, 204, 0);
-  }
-}
 
 @media (max-width: 1500px) {
   .flight-page {
@@ -434,9 +391,4 @@ component_display_name
     grid-template-columns: 1fr;
   }
 
-  .chat-toggle {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
 }

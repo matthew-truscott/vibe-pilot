@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSimConnection, getSimConnection } from '../services/simConnection'
 import chatService from '../services/chatService'
+import speechService from '../services/speechService'
 import './PassengerChat.css'
 
 interface Message {
@@ -29,6 +30,8 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
   const [sessionId, setSessionId] = useState<string | null>(chatService.getSessionId())
   const [isTyping, setIsTyping] = useState<boolean>(false)
   const [isStartingTour, setIsStartingTour] = useState<boolean>(false)
+  const [isListening, setIsListening] = useState<boolean>(false)
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState<boolean>(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { simData } = useSimConnection()
 
@@ -132,6 +135,11 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
       }
       console.log('Adding pilot message:', newMessage)
       setMessages(prev => [...prev, newMessage])
+      
+      // Auto-play pilot message if enabled
+      if (autoPlayEnabled && data.message) {
+        speechService.speak(data.message)
+      }
     } else if (data.type === 'MESSAGE_RECEIVED') {
       setIsTyping(true)
     } else if (data.type === 'TOUR_STARTED') {
@@ -182,6 +190,35 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
       e.preventDefault()
       sendMessage()
     }
+  }
+  
+  const handleVoiceInput = (): void => {
+    if (isListening) {
+      speechService.stopListening()
+      setIsListening(false)
+    } else {
+      setIsListening(true)
+      speechService.startListening(
+        (text: string) => {
+          setInputMessage(text)
+          setIsListening(false)
+          // Optionally auto-send the message
+          if (text.trim()) {
+            setTimeout(() => sendMessage(), 500)
+          }
+        },
+        (error: any) => {
+          console.error('Voice input error:', error)
+          setIsListening(false)
+        }
+      )
+    }
+  }
+  
+  const toggleAutoPlay = (): void => {
+    const newState = !autoPlayEnabled
+    setAutoPlayEnabled(newState)
+    speechService.setAutoPlay(newState)
   }
 
   const sendQuickQuestion = (question: string): void => {
@@ -260,6 +297,27 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
             </span>
           </div>
         </div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            onClick={toggleAutoPlay}
+            title={autoPlayEnabled ? 'Disable auto-play voice' : 'Enable auto-play voice'}
+            style={{
+              background: autoPlayEnabled ? 'var(--primary-blue)' : 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '8px 16px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '14px',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {autoPlayEnabled ? '🔊' : '🔇'} Auto-speak
+          </button>
+        </div>
       </div>
 
       <div className="chat-messages">
@@ -281,7 +339,28 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
                   })}
                 </span>
               </div>
-              <div className="message-text">{msg.content}</div>
+              <div className="message-text">
+                {msg.content}
+                {msg.role === 'pilot' && (
+                  <button
+                    onClick={() => speechService.speak(msg.content, true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      marginLeft: '10px',
+                      fontSize: '16px',
+                      opacity: 0.7,
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
+                    title="Listen to message"
+                  >
+                    🔊
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -314,13 +393,38 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
       </div>
 
       <div className="chat-input">
+        <button
+          onClick={handleVoiceInput}
+          disabled={!isConnected}
+          style={{
+            background: isListening ? '#ff4444' : 'var(--button-gradient)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '48px',
+            height: '48px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            animation: isListening ? 'pulse 1.5s infinite' : 'none'
+          }}
+          title={isListening ? 'Stop listening' : 'Start voice input'}
+        >
+          {isListening ? '⏹️' : '🎤'}
+        </button>
         <input
           type="text"
-          placeholder="Ask your pilot anything..."
+          placeholder={isListening ? "Listening..." : "Ask your pilot anything..."}
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           disabled={!isConnected}
+          style={{
+            backgroundColor: isListening ? '#f0f8ff' : 'white'
+          }}
         />
         <button 
           onClick={sendMessage} 

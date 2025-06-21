@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/matthew-truscott/vibe-pilot#readme",
   "dependencies": {
+    "@elevenlabs/react": "^0.1.7",
     "@vitejs/plugin-react": "^4.5.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
