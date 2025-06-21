@@ -30,7 +30,11 @@ function FlightPage() {
     if (!connected && !connecting) {
       connect()
     }
-  }, [connected, connecting, connect])
+    // Auto-start tour once connected
+    if (connected && !isFlightActive) {
+      startFlight()
+    }
+  }, [connected, connecting, connect, isFlightActive])
 
   // Removed webhook call - now handled after pilot responses
 
@@ -178,15 +182,9 @@ function FlightPage() {
       </div>
 
         <div className="flight-controls">
-          {!isFlightActive ? (
-            <button className="primary-button start-flight" onClick={startFlight}>
-              Start Tour
-            </button>
-          ) : (
-            <button className="secondary-button end-flight" onClick={endFlight}>
-              End Tour
-            </button>
-          )}
+          <button className="secondary-button end-flight" onClick={endFlight}>
+            End Tour
+          </button>
         </div>
       </div>
 

@@ -15,26 +15,21 @@ function HomePage() {
   }, [])
 
   const handlePlay = (): void => {
-    if (simConnected) {
-      navigate('/flight')
-    } else {
-      alert('Please connect to your flight simulator first! Go to Settings to configure connection.')
-      navigate('/settings')
-    }
+    navigate('/flight')
   }
 
   return (
     <div className="home-page page-content">
       <div className="hero-section">
         <h1 className="game-title floating">VIBE PILOT</h1>
-        <p className="game-subtitle">Flight Simulator Launcher</p>
+        <p className="game-subtitle">Scenic Flight Tours</p>
 
         <div className="hero-buttons">
           <button 
             className="play-button primary-button"
             onClick={handlePlay}
           >
-            {simConnected ? 'START FLIGHT' : 'CONNECT TO SIM'}
+            START TOUR
           </button>
         </div>
 
