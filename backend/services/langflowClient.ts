@@ -69,13 +69,15 @@ class LangflowService {
       this.baseUrl = config.baseURL || "http://localhost:7860";
       this.flowId = config.tourGuideFlowId;
 
-      if (!this.apiKey) {
-        console.warn("Langflow API key not configured - using mock mode");
-      }
-
-      console.log("Langflow service initialized");
+      console.log(`[Langflow] Service initializing...`);
+      console.log(`[Langflow] Base URL: ${this.baseUrl}`);
+      console.log(`[Langflow] Tour Guide Flow ID: ${this.flowId || 'Not configured'}`);
+      console.log(`[Langflow] Flight Info Flow ID: ${config.flightInfoFlowId || 'Not configured'}`);
+      console.log(`[Langflow] API Key: ${this.apiKey ? 'Configured' : 'Not configured - will try without auth'}`);
+      
+      console.log(`[Langflow] ✅ Service initialized`);
     } catch (error) {
-      console.error("Failed to initialize Langflow service:", error);
+      console.error("[Langflow] Failed to initialize service:", error);
     }
   }
 
@@ -85,14 +87,18 @@ class LangflowService {
     sessionId: string,
     conversationHistory?: Array<{ role: string; content: string }>,
   ): Promise<string> {
+    console.log(`\n🌐 [Langflow] sendTourGuideMessage called`);
+    console.log(`[Langflow] SessionId: ${sessionId}`);
+    console.log(`[Langflow] Message: "${message}"`);
+    
     if (!this.flowId) {
-      throw new Error("Tour guide flow not configured");
-    }
-
-    // If no API key, return mock response
-    if (!this.apiKey) {
+      console.error(`[Langflow] ❌ Tour guide flow not configured`);
+      console.log(`[Langflow] 🆘 Using mock response due to missing flow ID`);
       return this.getMockResponse(message, flightData);
     }
+
+    // Always try the API first, even without API key
+    console.log(`[Langflow] Attempting to connect to Langflow API...`);
 
     try {
       // Build conversation context
@@ -126,18 +132,24 @@ class LangflowService {
         },
       };
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      // Only add API key if configured
+      if (this.apiKey) {
+        headers["x-api-key"] = this.apiKey;
+      }
+      
       const options = {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": this.apiKey,
-        },
+        headers,
         body: JSON.stringify(payload),
       };
 
       const url = `${this.baseUrl}/api/v1/run/${this.flowId}`;
-      console.log("Sending tour guide message to:", url);
-      console.log("Payload:", JSON.stringify(payload, null, 2));
+      console.log(`[Langflow] 📡 Sending request to: ${url}`);
+      console.log(`[Langflow] Payload:`, JSON.stringify(payload, null, 2));
 
       const response = await fetch(url, options);
 
@@ -256,15 +268,16 @@ class LangflowService {
   async getFlightInfo(): Promise<FlightData> {
     const flowId = config.flightInfoFlowId;
 
+    console.log(`[Langflow] Getting flight info...`);
+    
     if (!flowId) {
-      console.warn("Flight info flow not configured - using mock data");
+      console.log(`[Langflow] ⚠️ Flight info flow not configured`);
+      console.log(`[Langflow] 🆘 Using mock flight data`);
       return this.getMockFlightInfo();
     }
 
-    // If no API key, return mock response
-    if (!this.apiKey) {
-      return this.getMockFlightInfo();
-    }
+    // Always try the API first, even without API key
+    console.log(`[Langflow] Attempting to fetch real flight data...`);
 
     try {
       const payload = {
@@ -273,12 +286,18 @@ class LangflowService {
         input_type: "chat",
       };
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      // Only add API key if configured
+      if (this.apiKey) {
+        headers["x-api-key"] = this.apiKey;
+      }
+      
       const options = {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": this.apiKey,
-        },
+        headers,
         body: JSON.stringify(payload),
       };
 
@@ -313,12 +332,12 @@ class LangflowService {
             ) {
               const message = component.messages[0];
               if (message.message) {
-                console.log(
-                  "Extracted flight data string from messages array:",
-                  message.message,
-                );
+                //console.log(
+                //  "Extracted flight data string from messages array:",
+                //  message.message,
+                //);
                 const flightInfo = JSON.parse(message.message);
-                console.log("Parsed flight info:", flightInfo);
+                // console.log("Parsed flight info:", flightInfo);
                 return this.validateFlightData(flightInfo);
               }
             }
@@ -352,11 +371,13 @@ class LangflowService {
         const flightInfo = JSON.parse(responseText);
         return this.validateFlightData(flightInfo);
       } catch (parseError) {
-        console.error("Failed to parse flight info:", parseError);
+        console.error(`[Langflow] ❌ Failed to parse flight info:`, parseError);
+        console.log(`[Langflow] 🆘 Using mock flight data`);
         return this.getMockFlightInfo();
       }
     } catch (error) {
-      console.error("Error getting flight info from Langflow:", error);
+      console.error(`[Langflow] ❌ Error getting flight info:`, error);
+      console.log(`[Langflow] 🆘 Using mock flight data`);
       return this.getMockFlightInfo();
     }
   }
