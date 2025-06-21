@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useSimConnection } from '../services/simConnection'
+import { useSimConnection, getSimConnection } from '../services/simConnection'
 import chatService from '../services/chatService'
 import './PassengerChat.css'
 
@@ -28,6 +28,7 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
   const [isConnected, setIsConnected] = useState<boolean>(false)
   const [sessionId, setSessionId] = useState<string | null>(chatService.getSessionId())
   const [isTyping, setIsTyping] = useState<boolean>(false)
+  const [isStartingTour, setIsStartingTour] = useState<boolean>(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { simData } = useSimConnection()
 
@@ -81,22 +82,40 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
   }
 
   const startTour = async (): Promise<void> => {
-    console.log('startTour called, current sessionId:', sessionId)
-    const currentSessionId = chatService.getSessionId()
+    console.log('startTour called, current sessionId:', sessionId, 'isStartingTour:', isStartingTour)
     
+    // Prevent multiple concurrent tour starts
+    if (isStartingTour) {
+      console.log('Tour start already in progress, skipping')
+      return
+    }
+    
+    const currentSessionId = chatService.getSessionId()
     if (currentSessionId) {
       console.log('Tour already started with sessionId:', currentSessionId)
       setSessionId(currentSessionId)
       return
     }
     
+    setIsStartingTour(true)
+    
     try {
       console.log('Starting new tour...')
       const result = await chatService.startTour('Guest', 'scenic')
       console.log('Tour started with result:', result)
       setSessionId(result.sessionId)
+      
+      // Request flight info updates after tour starts
+      setTimeout(() => {
+        chatService.requestFlightInfo()
+        // Also trigger through SimConnection
+        const simConnection = getSimConnection()
+        simConnection.requestFlightInfo()
+      }, 500)
     } catch (error) {
       console.error('Failed to start tour:', error)
+    } finally {
+      setIsStartingTour(false)
     }
   }
 
@@ -133,7 +152,7 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
     // Add passenger message to chat
     const newMessage = {
       id: Date.now(),
-      role: 'passenger',
+      role: 'passenger' as const,
       content: message,
       timestamp: new Date()
     }

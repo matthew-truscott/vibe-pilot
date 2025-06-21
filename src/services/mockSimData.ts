@@ -140,6 +140,17 @@ export const generateMockFlightData = (): ExtendedFlightData => {
   };
 };
 
+export const initializeFromState = (initialData: Partial<FlightData>): void => {
+  flightData = {
+    ...flightData,
+    ...initialData
+  };
+  lastUpdate = Date.now();
+  if (!flightStartTime) {
+    flightStartTime = Date.now();
+  }
+};
+
 export const resetFlightData = (): void => {
   flightStartTime = Date.now();
   lastUpdate = Date.now();

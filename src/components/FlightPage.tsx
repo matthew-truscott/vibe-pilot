@@ -125,7 +125,7 @@ function FlightPage() {
           
           <div className="instrument vsi">
             <h3>Vertical Speed</h3>
-            <div className={`instrument-value ${simData.verticalSpeed > 0 ? 'climbing' : simData.verticalSpeed < 0 ? 'descending' : ''}`}>
+            <div className={`instrument-value ${simData.verticalSpeed > 50 ? 'climbing' : simData.verticalSpeed < -50 ? 'descending' : ''}`}>
               {simData.verticalSpeed > 0 ? '+' : ''}{Math.round(simData.verticalSpeed)}
             </div>
             <div className="instrument-unit">fpm</div>

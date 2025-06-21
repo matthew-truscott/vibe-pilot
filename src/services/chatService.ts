@@ -12,6 +12,7 @@ interface ChatCallbacks {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onMessage?: (data: ChatMessage) => void;
+  onFlightInfo?: (data: any) => void;
 }
 
 interface StartTourResponse {
@@ -32,6 +33,7 @@ class ChatService {
   private reconnectDelay: number = 1000;
   private isConnecting: boolean = false;
   private shouldReconnect: boolean = true;
+  private isStartingTour: boolean = false;
 
   connect(callbacks: ChatCallbacks): void {
     // Prevent multiple simultaneous connections
@@ -41,7 +43,8 @@ class ChatService {
     }
     
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('Already connected, calling onConnect callback');
+      console.log('Already connected, updating callbacks and calling onConnect');
+      this.callbacks = { ...this.callbacks, ...callbacks };
       callbacks.onConnect?.();
       return;
     }
@@ -104,9 +107,7 @@ class ChatService {
         
       case 'TOUR_STARTED':
         this.sessionId = data.sessionId || null;
-        // Pass through TOUR_STARTED message first
-        this.callbacks.onMessage?.(data);
-        // Also send as PILOT_MESSAGE for display
+        // Send as PILOT_MESSAGE for display
         this.callbacks.onMessage?.({
           type: 'PILOT_MESSAGE',
           message: data.message,
@@ -118,6 +119,10 @@ class ChatService {
       case 'MESSAGE_RECEIVED':
       case 'FLIGHT_UPDATE':
         this.callbacks.onMessage?.(data);
+        break;
+        
+      case 'FLIGHT_INFO_UPDATE':
+        this.callbacks.onFlightInfo?.(data);
         break;
         
       case 'ERROR':
@@ -151,19 +156,40 @@ class ChatService {
       console.log('Tour already started with sessionId:', this.sessionId);
       return { sessionId: this.sessionId, message: 'Tour already in progress' };
     }
+    
+    // Prevent concurrent tour starts
+    if (this.isStartingTour) {
+      console.log('Tour start already in progress, waiting...');
+      // Wait a bit and return existing session if available
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (this.sessionId) {
+        return { sessionId: this.sessionId, message: 'Tour already in progress' };
+      }
+    }
+    
+    this.isStartingTour = true;
 
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.isStartingTour = false;
         reject(new Error('WebSocket not connected'));
         return;
       }
       
       // Set up one-time listener for tour start response
       const originalOnMessage = this.callbacks.onMessage;
+      const timeoutId = setTimeout(() => {
+        this.isStartingTour = false;
+        this.callbacks.onMessage = originalOnMessage;
+        reject(new Error('Tour start timeout'));
+      }, 5000);
+      
       this.callbacks.onMessage = (data: ChatMessage) => {
         if (data.type === 'TOUR_STARTED') {
+          clearTimeout(timeoutId);
           this.sessionId = data.sessionId || null;
           this.callbacks.onMessage = originalOnMessage;
+          this.isStartingTour = false;
           resolve({
             sessionId: data.sessionId || '',
             message: data.message || ''
@@ -214,6 +240,22 @@ class ChatService {
       payload: {
         flightData
       }
+    }));
+  }
+
+  requestFlightInfo(): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.warn('WebSocket not connected - cannot request flight info');
+      return;
+    }
+    
+    if (!this.sessionId) {
+      console.warn('No active session - cannot request flight info');
+      return;
+    }
+    
+    this.ws.send(JSON.stringify({
+      type: 'REQUEST_FLIGHT_INFO'
     }));
   }
 

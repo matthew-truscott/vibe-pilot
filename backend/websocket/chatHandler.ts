@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from "ws";
 import pilotAgent from "../services/pilotAgent";
+import langflowClient from "../services/langflowClient";
 
 interface FlightData {
   altitude: number;
@@ -29,9 +30,11 @@ type MessageType =
   | { type: "START_TOUR"; payload: StartTourPayload }
   | { type: "PASSENGER_MESSAGE"; payload: PassengerMessagePayload }
   | { type: "UPDATE_FLIGHT_DATA"; payload: UpdateFlightDataPayload }
-  | { type: "END_TOUR" };
+  | { type: "END_TOUR" }
+  | { type: "REQUEST_FLIGHT_INFO" };
 
 const activeConnections = new Map<string, WebSocket>();
+const flightInfoIntervals = new Map<string, NodeJS.Timeout>();
 
 export function setupWebSocketHandlers(wss: WebSocketServer): void {
   wss.on("connection", (ws: WebSocket) => {
@@ -124,6 +127,13 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
               pilotAgent.endTour(sessionId);
               activeConnections.delete(sessionId);
 
+              // Stop flight info polling
+              const interval = flightInfoIntervals.get(sessionId);
+              if (interval) {
+                clearInterval(interval);
+                flightInfoIntervals.delete(sessionId);
+              }
+
               ws.send(
                 JSON.stringify({
                   type: "TOUR_ENDED",
@@ -131,6 +141,61 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
                 }),
               );
             }
+            break;
+
+          case "REQUEST_FLIGHT_INFO":
+            // Start or restart flight info polling
+            if (!sessionId) {
+              ws.send(
+                JSON.stringify({
+                  type: "ERROR",
+                  message: "No active session for flight info",
+                }),
+              );
+              return;
+            }
+
+            // Clear existing interval if any
+            const existingInterval = flightInfoIntervals.get(sessionId);
+            if (existingInterval) {
+              clearInterval(existingInterval);
+            }
+
+            // Start polling flight info every second
+            const pollFlightInfo = async () => {
+              try {
+                const flightData = await langflowClient.getFlightInfo();
+
+                // Send flight info update
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(
+                    JSON.stringify({
+                      type: "FLIGHT_INFO_UPDATE",
+                      data: flightData,
+                      source:
+                        flightData.aircraft === "Unknown Aircraft"
+                          ? "mock"
+                          : "real",
+                      timestamp: Date.now(),
+                    }),
+                  );
+                }
+              } catch (error) {
+                console.error("Error polling flight info:", error);
+                // Continue polling even on error - the service will fall back to mock data
+              }
+            };
+
+            // Start immediate poll
+            pollFlightInfo();
+
+            // Set up interval for subsequent polls
+            const interval = setInterval(pollFlightInfo, 1000);
+            flightInfoIntervals.set(sessionId, interval);
+
+            console.log(
+              `Started flight info polling for session: ${sessionId}`,
+            );
             break;
 
           default:
@@ -156,6 +221,14 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
       console.log("WebSocket connection closed");
       if (sessionId) {
         activeConnections.delete(sessionId);
+
+        // Clean up flight info polling
+        const interval = flightInfoIntervals.get(sessionId);
+        if (interval) {
+          clearInterval(interval);
+          flightInfoIntervals.delete(sessionId);
+          console.log(`Stopped flight info polling for session: ${sessionId}`);
+        }
       }
     });
 
@@ -189,4 +262,3 @@ export function broadcastFlightUpdate(
     );
   }
 }
-

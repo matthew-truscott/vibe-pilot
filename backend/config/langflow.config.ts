@@ -17,6 +17,7 @@ interface LangflowConfig {
   baseURL?: string;
   langflowId?: string;
   tourGuideFlowId: string;
+  flightInfoFlowId: string;
   isCloudHosted: () => boolean;
   getClientConfig: () => ClientConfig;
 }
@@ -26,6 +27,7 @@ const config: LangflowConfig = {
   baseURL: process.env.LANGFLOW_BASE_URL,
   langflowId: process.env.LANGFLOW_ID,
   tourGuideFlowId: process.env.TOUR_GUIDE_FLOW_ID || "",
+  flightInfoFlowId: process.env.FLIGHT_INFO_FLOW_ID || "",
 
   // Determine if using cloud or self-hosted
   isCloudHosted: () => {

@@ -119,3 +119,30 @@ export interface AchievementCheckData extends FlightScoreData {
   // Additional fields that might be needed for achievement checks
 }
 
+// WebSocket message types for flight info
+export interface FlightInfoUpdate {
+  type: 'FLIGHT_INFO_UPDATE';
+  data: {
+    altitude: number;
+    altitudeAGL?: number;
+    latitude?: number;
+    longitude?: number;
+    heading?: number;
+    speed?: number;
+    airspeed?: number;
+    groundSpeed?: number;
+    verticalSpeed?: number;
+    pitch?: number;
+    bank?: number;
+    throttle?: number;
+    gear?: boolean;
+    flaps?: number;
+    fuelPercentage?: number;
+    engineRPM?: number;
+    aircraft?: string;
+    onGround: boolean;
+  };
+  source: 'real' | 'mock';
+  timestamp: number;
+}
+
