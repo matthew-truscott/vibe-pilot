@@ -43,7 +43,11 @@ class PilotAgentService {
     passengerName: string = "Guest",
     tourType: string = "scenic",
   ): Promise<StartTourResult> {
+    console.log(`\n🎫 [PilotAgent] Starting new tour`);
+    console.log(`[PilotAgent] Passenger: ${passengerName}, Type: ${tourType}`);
+    
     const sessionId = langflowService.createSession();
+    console.log(`[PilotAgent] Created sessionId: ${sessionId}`);
 
     const session: Session = {
       sessionId,
@@ -55,6 +59,7 @@ class PilotAgentService {
     };
 
     this.sessions.set(sessionId, session);
+    console.log(`[PilotAgent] Session stored. Total active sessions: ${this.sessions.size}`);
 
     // Return a simple welcome message without triggering AI
     const welcomeMessage =
@@ -72,8 +77,13 @@ class PilotAgentService {
     message: string,
     flightData: FlightData,
   ): Promise<string> {
+    console.log(`\n📩 [PilotAgent] Processing message for session: ${sessionId}`);
+    console.log(`[PilotAgent] Message: "${message}"`);
+    
     const session = this.sessions.get(sessionId);
     if (!session) {
+      console.error(`[PilotAgent] ❌ Invalid session: ${sessionId}`);
+      console.error(`[PilotAgent] Active sessions:`, Array.from(this.sessions.keys()));
       throw new Error("Invalid session");
     }
 
@@ -94,14 +104,22 @@ class PilotAgentService {
         role: msg.role,
         content: msg.content,
       }));
+      console.log(`[PilotAgent] Conversation history length: ${conversationHistory.length}`);
 
       // Get pilot response from Langflow
+      console.log(`[PilotAgent] 🤖 Calling Langflow service...`);
+      const startTime = Date.now();
+      
       const pilotResponse = await langflowService.sendTourGuideMessage(
         message,
         flightData,
         sessionId,
         conversationHistory,
       );
+      
+      const responseTime = Date.now() - startTime;
+      console.log(`[PilotAgent] ✅ Langflow responded in ${responseTime}ms`);
+      console.log(`[PilotAgent] Response preview: "${pilotResponse.substring(0, 100)}..."`);
 
       // Store pilot response
       session.messages.push({
@@ -113,10 +131,13 @@ class PilotAgentService {
 
       return pilotResponse;
     } catch (error) {
-      console.error("Error getting pilot response:", error);
+      console.error(`[PilotAgent] ❌ Error getting pilot response:`, error);
+      console.error(`[PilotAgent] Error details:`, error instanceof Error ? error.stack : error);
 
       // Fallback response
+      console.log(`[PilotAgent] 🆘 Using fallback response`);
       const fallbackResponse = this.getFallbackResponse(message, flightData);
+      console.log(`[PilotAgent] Fallback response: "${fallbackResponse}"`);
 
       session.messages.push({
         role: "pilot",

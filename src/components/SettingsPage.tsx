@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getSettings, saveSettings, clearScores } from '../utils/storage'
 import { useSimConnection } from '../services/simConnection'
+import flightGoalService from '../services/flightGoalService'
 import { Settings } from '../types'
 import './SettingsPage.css'
 
@@ -203,14 +204,32 @@ function SettingsPage() {
           <div className="setting-group">
             <label>Starting Location</label>
             <select 
-              value={settings.startingLocation || 'san-francisco'}
+              value={settings.startingLocation || 'athens'}
               onChange={(e) => handleSettingChange('startingLocation', e.target.value)}
             >
-              <option value="san-francisco">San Francisco Bay Area</option>
-              <option value="new-york">New York City</option>
+              <option value="athens">Athens</option>
+              <option value="san-francisco">San Francisco</option>
+              <option value="new-york">New York</option>
               <option value="grand-canyon">Grand Canyon</option>
+              <option value="paris">Paris</option>
+              <option value="dubai">Dubai</option>
+              <option value="tokyo">Tokyo</option>
+              <option value="sydney">Sydney</option>
+              <option value="london">London</option>
+              <option value="rio">Rio</option>
+              <option value="rome">Rome</option>
+              <option value="hawaii">Hawaii</option>
+              <option value="alps">Alps</option>
+              <option value="norway-fjords">Norway Fjords</option>
+              <option value="antarctica">Antarctica</option>
             </select>
           </div>
+          
+          {settings.startingLocation && (
+            <div className="destination-preview">
+              <p>{flightGoalService.getDestinationDescription(settings.startingLocation)}</p>
+            </div>
+          )}
         </div>
 
         <div className="settings-section">

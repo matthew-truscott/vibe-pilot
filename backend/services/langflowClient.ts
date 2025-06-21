@@ -247,7 +247,9 @@ class LangflowService {
 
   // Create a new tour session
   createSession(): string {
-    return `tour-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `tour-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[Langflow] 🆕 Created new session: ${sessionId}`);
+    return sessionId;
   }
 
   // Get flight information from Langflow

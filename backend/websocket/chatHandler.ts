@@ -37,44 +37,57 @@ const activeConnections = new Map<string, WebSocket>();
 const flightInfoIntervals = new Map<string, NodeJS.Timeout>();
 
 export function setupWebSocketHandlers(wss: WebSocketServer): void {
+  let connectionCount = 0;
+  
   wss.on("connection", (ws: WebSocket) => {
-    console.log("New WebSocket connection established");
-    console.log("WebSocket readyState:", ws.readyState);
+    connectionCount++;
+    const connectionId = `conn_${Date.now()}_${connectionCount}`;
+    console.log(`\n🔌 [${connectionId}] New WebSocket connection established`);
+    console.log(`[${connectionId}] WebSocket readyState:`, ws.readyState);
+    console.log(`[${connectionId}] Total active connections:`, wss.clients.size);
 
     let sessionId: string | null = null;
 
     ws.on("message", async (data: Buffer) => {
       try {
-        console.log("Raw WebSocket data received:", data.toString());
-        const message = JSON.parse(data.toString()) as MessageType;
-        console.log("Parsed WebSocket message:", message.type, message);
+        const rawData = data.toString();
+        console.log(`\n📨 [${connectionId}] Raw WebSocket data received:`, rawData.substring(0, 200) + (rawData.length > 200 ? '...' : ''));
+        const message = JSON.parse(rawData) as MessageType;
+        console.log(`[${connectionId}] Parsed message type: ${message.type}`);
+        console.log(`[${connectionId}] Message payload:`, JSON.stringify('payload' in message ? message.payload : 'No payload', null, 2));
 
         switch (message.type) {
           case "START_TOUR":
-            // Start a new tour
-            console.log("Starting tour for:", message.payload);
+            console.log(`\n🚁 [${connectionId}] START_TOUR received`);
+            console.log(`[${connectionId}] Current sessionId before start:`, sessionId);
             const { passengerName, tourType } = message.payload;
+            console.log(`[${connectionId}] Tour details - Passenger: ${passengerName}, Type: ${tourType}`);
+            
             const result = await pilotAgent.startTour(passengerName, tourType);
             sessionId = result.sessionId;
-            console.log("Tour started with sessionId:", sessionId);
+            console.log(`[${connectionId}] ✅ Tour started with sessionId:`, sessionId);
 
             // Store connection
             activeConnections.set(sessionId, ws);
 
             // Send welcome message
-            console.log("Sending welcome message:", result.welcomeMessage);
+            console.log(`[${connectionId}] Welcome message:`, result.welcomeMessage);
             const tourStartedMessage = {
               type: "TOUR_STARTED",
               sessionId,
               message: result.welcomeMessage,
             };
-            console.log("Sending TOUR_STARTED message:", tourStartedMessage);
+            console.log(`[${connectionId}] 📤 Sending TOUR_STARTED response`);
             ws.send(JSON.stringify(tourStartedMessage));
+            console.log(`[${connectionId}] ✅ TOUR_STARTED sent successfully`);
             break;
 
           case "PASSENGER_MESSAGE":
-            // Handle passenger message
+            console.log(`\n💬 [${connectionId}] PASSENGER_MESSAGE received`);
+            console.log(`[${connectionId}] SessionId:`, sessionId);
+            
             if (!sessionId) {
+              console.error(`[${connectionId}] ❌ No active session!`);
               ws.send(
                 JSON.stringify({
                   type: "ERROR",
@@ -85,8 +98,11 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
             }
 
             const { message: passengerMessage, flightData } = message.payload;
+            console.log(`[${connectionId}] Passenger message:`, passengerMessage);
+            console.log(`[${connectionId}] Flight data:`, JSON.stringify(flightData, null, 2));
 
             // Send acknowledgment immediately
+            console.log(`[${connectionId}] 📤 Sending MESSAGE_RECEIVED acknowledgment`);
             ws.send(
               JSON.stringify({
                 type: "MESSAGE_RECEIVED",
@@ -95,13 +111,20 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
             );
 
             // Get pilot response
+            console.log(`[${connectionId}] 🤖 Getting AI response from pilot agent...`);
+            const startTime = Date.now();
+            
             const pilotResponse = await pilotAgent.sendMessage(
               sessionId,
               passengerMessage,
               flightData,
             );
+            
+            const responseTime = Date.now() - startTime;
+            console.log(`[${connectionId}] ✅ Pilot response received in ${responseTime}ms:`, pilotResponse.substring(0, 100) + '...');
 
             // Send pilot response
+            console.log(`[${connectionId}] 📤 Sending PILOT_MESSAGE to client`);
             ws.send(
               JSON.stringify({
                 type: "PILOT_MESSAGE",
@@ -109,6 +132,7 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
                 timestamp: new Date().toISOString(),
               }),
             );
+            console.log(`[${connectionId}] ✅ PILOT_MESSAGE sent successfully`);
             break;
 
           case "UPDATE_FLIGHT_DATA":
@@ -207,7 +231,8 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
             );
         }
       } catch (error) {
-        console.error("WebSocket message error:", error);
+        console.error(`[${connectionId}] ❌ WebSocket message error:`, error);
+        console.error(`[${connectionId}] Error stack:`, error instanceof Error ? error.stack : 'No stack trace');
         ws.send(
           JSON.stringify({
             type: "ERROR",
@@ -218,7 +243,10 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
     });
 
     ws.on("close", () => {
-      console.log("WebSocket connection closed");
+      console.log(`\n🔌 [${connectionId}] WebSocket connection closed`);
+      console.log(`[${connectionId}] SessionId at close:`, sessionId);
+      console.log(`[${connectionId}] Remaining connections:`, wss.clients.size - 1);
+      
       if (sessionId) {
         activeConnections.delete(sessionId);
 
@@ -233,17 +261,19 @@ export function setupWebSocketHandlers(wss: WebSocketServer): void {
     });
 
     ws.on("error", (error: Error) => {
-      console.error("WebSocket error:", error);
+      console.error(`\n❌ [${connectionId}] WebSocket error:`, error.message);
+      console.error(`[${connectionId}] Error details:`, error);
     });
 
     // Send initial connection confirmation
-    console.log("Sending CONNECTED message to client");
+    console.log(`[${connectionId}] 📤 Sending initial CONNECTED message`);
     ws.send(
       JSON.stringify({
         type: "CONNECTED",
         message: "Connected to tour guide service",
       }),
     );
+    console.log(`[${connectionId}] ✅ Initial connection setup complete`);
   });
 }
 
