@@ -738,7 +738,7 @@ export class SimConnectManager {
       throw new Error("Not connected to FSX");
     }
     // Aileron position: -100 to 100 maps to -1 to 1
-    const normalizedPosition = position / 100;
+    const normalizedPosition = position * 160;
     console.error(`Setting aileron to ${position} (normalized: ${normalizedPosition})`);
     try {
       await this.setSimVariable("AILERON POSITION", "position", normalizedPosition);
