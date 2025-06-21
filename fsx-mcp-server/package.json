@@ -1,0 +1,33 @@
+{
+  "name": "fsx-mcp-server",
+  "version": "1.0.0",
+  "main": "dist/fastmcp-server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/fastmcp-server.js",
+    "start:http": "node dist/fastmcp-server.js http",
+    "dev": "tsx --watch src/fastmcp-server.ts",
+    "dev:http": "tsx --watch src/fastmcp-server.ts http",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "simconnect",
+    "fsx",
+    "flight-simulator"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "MCP server for Microsoft Flight Simulator X SimConnect integration",
+  "dependencies": {
+    "@types/node": "^24.0.3",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "fastmcp": "^3.4.0",
+    "node-simconnect": "^4.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "zod": "^3.25.67"
+  }
+}
