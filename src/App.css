@@ -7,8 +7,8 @@
 
 .page-content {
   flex: 1;
-  padding: 80px 20px 100px;
-  max-width: 1200px;
+  padding: 90px 30px 110px; /* Increased padding for better spacing */
+  max-width: 1600px; /* Increased for widescreen */
   margin: 0 auto;
   width: 100%;
 }

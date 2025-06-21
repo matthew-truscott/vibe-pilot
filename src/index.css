@@ -5,16 +5,40 @@
 }
 
 :root {
+  /* Primary Aviation Colors */
   --primary-blue: #0066cc;
+  --secondary-blue: #4d94ff;
   --sky-blue: #87ceeb;
   --cloud-white: #f0f8ff;
   --dark-blue: #003366;
+  --horizon-blue: #5BA3E0;
+  --altitude-purple: #7B68EE;
+  
+  /* Status Colors */
   --success-green: #4caf50;
   --warning-orange: #ff9800;
   --danger-red: #f44336;
-  --text-dark: #333;
+  
+  /* Neutral Colors */
+  --text-dark: #1a1a1a;
   --text-light: #666;
-  --border-color: #ddd;
+  --text-muted: #999;
+  --border-color: #e0e0e0;
+  --background: #f5f7fa;
+  
+  /* Shadows & Effects */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  --shadow-xl: 0 12px 48px rgba(0,0,0,0.2);
+  --glow-blue: 0 0 20px rgba(0, 102, 204, 0.3);
+  --glow-green: 0 0 20px rgba(76, 175, 80, 0.3);
+  
+  /* Gradients */
+  --sky-gradient: linear-gradient(180deg, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%);
+  --horizon-gradient: linear-gradient(180deg, #5BA3E0 0%, #87CEEB 100%);
+  --glass-gradient: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  --button-gradient: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
 }
 
 body {
@@ -23,63 +47,119 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(to bottom, var(--sky-blue) 0%, var(--cloud-white) 100%);
+  background: var(--sky-gradient);
+  background-attachment: fixed;
   min-height: 100vh;
   color: var(--text-dark);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Add subtle cloud pattern overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
 
 button {
   cursor: pointer;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 500;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
+}
+
+button:hover::after {
+  width: 300px;
+  height: 300px;
 }
 
 button:active {
   transform: translateY(0);
+  transition: all 0.1s ease;
 }
 
 .primary-button {
-  background-color: var(--primary-blue);
+  background: var(--button-gradient);
   color: white;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
 }
 
 .primary-button:hover {
-  background-color: var(--dark-blue);
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
 }
 
 .secondary-button {
-  background-color: white;
+  background: rgba(255,255,255,0.9);
   color: var(--primary-blue);
   border: 2px solid var(--primary-blue);
+  backdrop-filter: blur(10px);
 }
 
 .secondary-button:hover {
-  background-color: var(--primary-blue);
+  background: var(--primary-blue);
   color: white;
+  border-color: var(--primary-blue);
 }
 
 input, select {
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
   font-size: 16px;
   width: 100%;
   max-width: 300px;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 
+    0 0 0 3px rgba(0, 102, 204, 0.1),
+    0 2px 8px rgba(0, 102, 204, 0.1);
+  transform: translateY(-1px);
 }
 
 .container {

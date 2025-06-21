@@ -165,12 +165,69 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
     }
   }
 
-  const quickQuestions = [
+  const sendQuickQuestion = (question: string): void => {
+    // Set the message and send immediately
+    setInputMessage(question)
+    
+    // Add passenger message to chat
+    const newMessage = {
+      id: Date.now(),
+      role: 'passenger' as const,
+      content: question,
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, newMessage])
+
+    // Send message with flight data
+    if (!sessionId) {
+      console.warn('No session ID available - cannot send message')
+      return
+    }
+    
+    try {
+      chatService.sendMessage(question, simData || undefined)
+      setInputMessage('') // Clear input after sending
+      
+      // Generate new random questions for next time
+      setTimeout(() => {
+        setQuickQuestions(generateQuickQuestions(3))
+      }, 1000) // Small delay so user can see their choice was sent
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      setIsTyping(false)
+    }
+  }
+
+  const allQuickQuestions = [
     "What's that below us?",
-    "How high are we flying?",
+    "How high are we flying?", 
     "Is this normal turbulence?",
     "Can we fly over there?",
+    "How fast are we going?",
+    "What's our flight plan?",
+    "Is it safe to fly in this weather?",
+    "Can you show me the city center?",
+    "How long until we land?",
+    "What aircraft are we flying?",
+    "Can we see the mountains from here?",
+    "What's that noise?",
+    "Are we on course?",
+    "How's the fuel looking?"
   ]
+
+  // State for current quick questions
+  const [quickQuestions, setQuickQuestions] = useState<string[]>([])
+
+  // Generate random questions
+  const generateQuickQuestions = (count: number = 3) => {
+    const shuffled = [...allQuickQuestions].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, count)
+  }
+
+  // Initialize quick questions on mount
+  useEffect(() => {
+    setQuickQuestions(generateQuickQuestions(3))
+  }, [])
 
   return (
     <div className="passenger-chat">
@@ -229,7 +286,8 @@ function PassengerChat({ shouldConnect = true }: PassengerChatProps) {
           <button
             key={index}
             className="quick-question-btn"
-            onClick={() => setInputMessage(question)}
+            onClick={() => sendQuickQuestion(question)}
+            disabled={!sessionId}
           >
             {question}
           </button>
