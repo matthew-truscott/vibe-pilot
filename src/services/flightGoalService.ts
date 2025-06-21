@@ -1,6 +1,6 @@
 // Service to set flight goals via webhook
 class FlightGoalService {
-  private webhookUrl = 'http://192.168.58.243:7860/api/v1/webhook/14514240-d5be-4ebe-b78e-64f5c647d026';
+  private webhookUrl = 'http://192.168.58.243:7860/api/v1/webhook/9df5c83e-fa0d-47aa-9891-8b4c3079cc83';
 
   // Destination presets with descriptive goals
   private destinations: Record<string, string> = {
